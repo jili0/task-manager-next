@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import TaskList from '@/components/TaskList';
 import { ITask } from '@/types';
@@ -8,27 +10,39 @@ import { sortTasks } from '@/lib/utils';
 import '@/styles/styles.css';
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Leite zur Login-Seite weiter, wenn nicht authentifiziert
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
   // Lade Aufgaben vom Server beim ersten Rendern
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch('/api/tasks');
-        if (response.ok) {
-          const data = await response.json();
-          setTasks(data);
+    // Lade Aufgaben nur, wenn der Benutzer authentifiziert ist
+    if (status === 'authenticated') {
+      const fetchTasks = async () => {
+        try {
+          const response = await fetch('/api/tasks');
+          if (response.ok) {
+            const data = await response.json();
+            setTasks(data);
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der Aufgaben:', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Fehler beim Laden der Aufgaben:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchTasks();
-  }, []);
+      fetchTasks();
+    }
+  }, [status]);
 
   // Füge eine neue Aufgabe hinzu
   const addTask = async (newTask: any) => {
@@ -127,6 +141,11 @@ export default function Home() {
     window.print();
   };
 
+  // Zeige Ladeanzeige, wenn Status wird geladen oder nicht authentifiziert ist
+  if (status === 'loading' || status === 'unauthenticated') {
+    return <div className="loading">Lade...</div>;
+  }
+
   if (loading) {
     return <div className="loading">Lade Aufgaben...</div>;
   }
@@ -137,6 +156,7 @@ export default function Home() {
         title="Task Manager" 
         onClear={clearTasks}
         onPrint={printTasks}
+        userName={session?.user?.name || ''}
       />
       <div className="container">
         <TaskList 

@@ -32,6 +32,7 @@ body {
 }
 
 /* Header */
+/* Verbesserte Header-Styles */
 .header {
   background-color: #fff;
   border-bottom: 1px solid #e5e5e5;
@@ -42,20 +43,39 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .header-title {
   font-size: 24px;
   font-weight: bold;
   color: #333;
+  margin: 0;
 }
 
-.header-buttons {
+.header-main-buttons {
   display: flex;
   gap: 8px;
 }
 
+.user-name {
+  font-weight: 500;
+}
+
 /* Buttons */
+
 .btn {
   padding: 4px 16px;
   font-size: 14px;
@@ -81,6 +101,15 @@ body {
 
 .btn-clear:hover {
   background-color: #fef2f2;
+}
+
+.btn-logout {
+  color: #4b5563;
+  border: 1px solid #9ca3af; 
+}
+
+.btn-logout:hover {
+  background-color: #f3f4f6;
 }
 
 .btn-add {
@@ -243,4 +272,81 @@ input {
   body {
     padding: 0;
   }
+}
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-form h1 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.login-button:hover {
+  background-color: #2563eb;
+}
+
+.login-button:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.error-message {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+}
+
+.signup-link {
+  margin-top: 1.5rem;
+  text-align: center;
 }
