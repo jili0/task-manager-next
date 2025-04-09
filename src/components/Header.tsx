@@ -18,21 +18,19 @@ function Header({ title, onClear, onPrint, userName }: HeaderProps) {
             <button 
               onClick={onPrint}
               className="btn btn-print"
-              title="Aufgaben drucken"
             >
-              Drucken
+              Print
             </button>
             <button 
               onClick={onClear}
               className="btn btn-clear"
-              title="Alle Aufgaben löschen"
             >
-              Löschen
+              Delete
             </button>
           </div>
         </div>
         <div className="header-right">
-          {userName && <span className="user-name">Hallo, {userName}</span>}
+          {userName && <span className="user-name">Hello, {userName}</span>}
           {userName && (
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}

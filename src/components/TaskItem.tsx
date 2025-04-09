@@ -212,7 +212,7 @@ function TaskItem({
             value={editedTask.date}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="04 oder 0405 oder 040525"
+            placeholder="Date"
             autoFocus
           />
         </div>
@@ -223,7 +223,7 @@ function TaskItem({
             value={editedTask.time}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="08 oder 0830"
+            placeholder="Time"
             ref={timeInputRef}
           />
         </div>
@@ -234,7 +234,7 @@ function TaskItem({
             value={editedTask.text}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="Aufgabenbeschreibung"
+            placeholder="Task"
             ref={textInputRef}
           />
         </div>

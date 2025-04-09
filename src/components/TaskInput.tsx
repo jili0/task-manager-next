@@ -191,7 +191,7 @@ function TaskInput({ onAddTask }: TaskInputProps) {
           value={newTask.date}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="04 oder 0405 oder 040525"
+          placeholder="Date"
         />
       </div>
       <div className="task-input-time">
@@ -201,7 +201,7 @@ function TaskInput({ onAddTask }: TaskInputProps) {
           value={newTask.time}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="08 oder 0830"
+          placeholder="Time"
           ref={timeInputRef}
         />
       </div>
@@ -212,7 +212,7 @@ function TaskInput({ onAddTask }: TaskInputProps) {
           value={newTask.text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Aufgabenbeschreibung"
+          placeholder="Task"
           ref={textInputRef}
         />
       </div>
