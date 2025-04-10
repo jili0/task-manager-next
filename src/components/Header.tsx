@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 import React from 'react';
 import { signOut } from 'next-auth/react';
 
@@ -8,7 +9,7 @@ interface HeaderProps {
   userName?: string;
 }
 
-function Header({ title, onClear, onPrint, userName }: HeaderProps) {
+const Header = ({ title, onClear, onPrint, userName }: HeaderProps) => {
   return (
     <header className="header">
       <div className="container header-content">
@@ -35,15 +36,15 @@ function Header({ title, onClear, onPrint, userName }: HeaderProps) {
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
               className="btn btn-logout"
-              title="Abmelden"
+              title="Sign Out"
             >
-              Abmelden
+              Sign Out
             </button>
           )}
         </div>
       </div>
     </header>
   );
-}
+};
 
 export default Header;

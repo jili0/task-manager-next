@@ -1,12 +1,13 @@
+// src/lib/db.ts
 import mongoose from "mongoose";
 
-// Definiere einen Typalias für den Connection-Cache
+// Define a type alias for the connection cache
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 };
 
-// Erweitern des globalen Namespace für TypeScript
+// Extend the global namespace for TypeScript
 declare global {
   var mongoose: MongooseCache | undefined;
 }
@@ -14,20 +15,20 @@ declare global {
 const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
-  throw new Error("Bitte definieren Sie die MONGODB_URI-Umgebungsvariable");
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
 
-// Initialisiere den Cache
+// Initialize cache
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 
-// Wenn der Cache noch nicht existiert, erstelle ihn
+// If cache doesn't exist yet, create it
 if (!global.mongoose) {
   global.mongoose = cached;
 }
 
-async function dbConnect() {
+const dbConnect = async () => {
   if (cached.conn) {
-    console.log("MongoDB: Bestehende Verbindung verwendet");
+    console.log("MongoDB: Using existing connection");
     return cached.conn;
   }
 
@@ -35,15 +36,15 @@ async function dbConnect() {
     const opts = {
       bufferCommands: false,
     };
-    console.log("MongoDB: Verbindung wird hergestellt...");
+    console.log("MongoDB: Establishing connection...");
     cached.promise = mongoose
       .connect(MONGODB_URI, opts)
       .then((mongoose) => {
-        console.log("MongoDB: Verbindung erfolgreich hergestellt");
+        console.log("MongoDB: Connection successfully established");
         return mongoose;
       })
       .catch((err) => {
-        console.error("MongoDB Verbindungsfehler:", err);
+        console.error("MongoDB Connection error:", err);
         throw err;
       });
   }
@@ -52,11 +53,11 @@ async function dbConnect() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    console.error("MongoDB: Verbindung fehlgeschlagen", e);
+    console.error("MongoDB: Connection failed", e);
     throw e;
   }
 
   return cached.conn;
-}
+};
 
 export default dbConnect;

@@ -1,3 +1,4 @@
+// src/models/Task.ts
 import mongoose, { Schema } from 'mongoose';
 import { ITask } from '@/types';
 
@@ -19,10 +20,20 @@ const TaskSchema = new Schema<ITask>(
       type: Boolean,
       default: false,
     },
+    userId: {
+      type: String,
+      required: true,
+      index: true
+    }
   },
   {
     timestamps: true,
+    // This will make it work with both new tasks and existing tasks
+    validateBeforeSave: false
   }
 );
 
-export default mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);
+// Create model only if it doesn't already exist
+const Task = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);
+
+export default Task;

@@ -1,5 +1,7 @@
+// src/components/TaskItem.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { ITask } from '@/types';
+import { formatDate, formatTime } from '@/lib/utils';
 
 interface TaskItemProps {
   task: ITask;
@@ -11,7 +13,7 @@ interface TaskItemProps {
   onToggleDone: () => void;
 }
 
-function TaskItem({ 
+const TaskItem = ({ 
   task, 
   index, 
   isEditing, 
@@ -19,13 +21,14 @@ function TaskItem({
   onSave, 
   onDelete, 
   onToggleDone 
-}: TaskItemProps) {
+}: TaskItemProps) => {
   const [editedTask, setEditedTask] = useState<ITask>({
     ...task,
     date: task.date || '',
     time: task.time || '',
     text: task.text || ''
   });
+  
   const timeInputRef = useRef<HTMLInputElement>(null);
   const textInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,13 +44,9 @@ function TaskItem({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // Spezielle Behandlung für Datumsformatierung
+    // Special handling for date formatting
     if (name === 'date') {
-      const today = new Date();
-      const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
-      const currentYear = today.getFullYear();
-      
-      // Speichere den Rohwert für Tag oder Tag-Monat
+      // Handle raw date inputs
       if (value.match(/^\d{1,5}$/)) {
         setEditedTask(prev => ({
           ...prev,
@@ -56,19 +55,11 @@ function TaskItem({
         return;
       }
       
-      // Behandle vollständiges Datum (z.B., "040525")
+      // Handle complete date (e.g., "040525")
       else if (value.match(/^\d{6}$/)) {
-        const day = value.substring(0, 2);
-        const month = value.substring(2, 4);
-        const year = 2000 + parseInt(value.substring(4, 6));
+        const formattedDate = formatDate(value);
         
-        const date = new Date(`${year}-${month}-${day}`);
-        const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-        const weekday = days[date.getDay()];
-        
-        const formattedDate = `${weekday}, ${day}.${month}.${year}`;
-        
-        // Direkt mit formatiertem Datum speichern
+        // Save directly with formatted date
         onSave({
           ...task,
           ...editedTask,
@@ -79,9 +70,9 @@ function TaskItem({
       }
     }
     
-    // Spezielle Behandlung für Zeitformatierung
+    // Special handling for time formatting
     if (name === 'time') {
-      // Speichere Rohwert für Stunden
+      // Store raw hour value
       if (value.match(/^\d{1,3}$/)) {
         setEditedTask(prev => ({
           ...prev,
@@ -90,14 +81,13 @@ function TaskItem({
         return;
       }
       
-      // Behandle Stunden und Minuten (z.B., "0800")
+      // Handle hours and minutes (e.g., "0800")
       if (value.match(/^\d{4}$/)) {
-        const hours = value.substring(0, 2);
-        const minutes = value.substring(2, 4);
+        const formattedTime = formatTime(value);
         
         setEditedTask(prev => ({
           ...prev,
-          time: `${hours}:${minutes}`
+          time: formattedTime
         }));
         return;
       }
@@ -111,95 +101,63 @@ function TaskItem({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      // Spezielle Behandlung für Datumsfeld - Fokus auf Zeitfeld verschieben
+      // Special handling for date field - move focus to time field
       if (e.currentTarget.name === 'date') {
-        e.preventDefault(); // Standardaktion Enter verhindern
+        e.preventDefault();
         
-        // Formatiere Datum, wenn es den Mustern entspricht
+        // Format date if it matches patterns
         if (editedTask.date && (editedTask.date.match(/^\d{2}$/) || editedTask.date.match(/^\d{4}$/))) {
-          const today = new Date();
-          const currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
-          const currentYear = today.getFullYear();
+          const formattedDate = formatDate(editedTask.date);
           
-          let day, month, formattedDate;
-          
-          if (editedTask.date.match(/^\d{2}$/)) {
-            // Formatiere nur Tag (z.B., "04")
-            day = editedTask.date;
-            month = currentMonth;
-            
-            const date = new Date(`${currentYear}-${month}-${day}`);
-            const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-            const weekday = days[date.getDay()];
-            
-            formattedDate = `${weekday}, ${day}.${month}.${currentYear}`;
-          } else {
-            // Formatiere Tag und Monat (z.B., "0405")
-            day = editedTask.date.substring(0, 2);
-            month = editedTask.date.substring(2, 4);
-            
-            const date = new Date(`${currentYear}-${month}-${day}`);
-            const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-            const weekday = days[date.getDay()];
-            
-            formattedDate = `${weekday}, ${day}.${month}.${currentYear}`;
-          }
-          
-          // Formatiertes Datum im State aktualisieren
+          // Update formatted date in state
           setEditedTask(prev => ({
             ...prev,
             date: formattedDate
           }));
         }
         
-        // Fokus auf Zeitfeld verschieben
+        // Move focus to time field
         if (timeInputRef.current) {
           timeInputRef.current.focus();
         }
         return;
       }
       
-      // Spezielle Behandlung für Zeitfeld - Fokus auf Textfeld verschieben
+      // Special handling for time field - move focus to text field
       if (e.currentTarget.name === 'time') {
-        e.preventDefault(); // Standardaktion Enter verhindern
+        e.preventDefault();
         
-        // Formatiere Zeit, wenn es dem 2-stelligen Muster entspricht
+        // Format time if it matches 2-digit pattern
         if (editedTask.time && editedTask.time.match(/^\d{2}$/)) {
-          const hours = editedTask.time;
-          const formattedTime = `${hours}:00`;
+          const formattedTime = `${editedTask.time}:00`;
           
-          // Zeit im State aktualisieren
+          // Update time in state
           setEditedTask(prev => ({
             ...prev,
             time: formattedTime
           }));
         }
         
-        // Fokus auf Textfeld verschieben
+        // Move focus to text field
         if (textInputRef.current) {
           textInputRef.current.focus();
         }
         return;
       }
       
-      // Aufgabe bei Enter im Textfeld speichern
+      // Save task on Enter in text field
       saveTask();
     }
   };
 
   const saveTask = () => {
-    // Aufgabe nur speichern, wenn es irgendwelchen Inhalt gibt
+    // Only save task if there's any content
     if (editedTask.date || editedTask.time || editedTask.text) {
       onSave({
         ...task,
         ...editedTask
       });
     }
-  };
-
-  const formatDate = (dateStr: string): string => {
-    if (!dateStr) return '';
-    return dateStr;
   };
 
   if (isEditing) {
@@ -243,13 +201,13 @@ function TaskItem({
             onClick={saveTask}
             className="btn btn-save"
           >
-            Speichern
+            Save
           </button>
           <button 
             onClick={() => onSave(task)}
             className="btn btn-cancel"
           >
-            Abbrechen
+            Cancel
           </button>
         </div>
       </div>
@@ -262,7 +220,7 @@ function TaskItem({
       onClick={onEdit}
     >
       <div className="task-item-date">
-        {formatDate(task.date) || ' '}
+        {task.date || ' '}
       </div>
       <div className="task-item-time">
         {task.time || ' '}
@@ -292,6 +250,6 @@ function TaskItem({
       </div>
     </div>
   );
-}
+};
 
 export default TaskItem;

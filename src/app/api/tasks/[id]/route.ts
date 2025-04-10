@@ -1,42 +1,65 @@
+// src/app/api/tasks/[id]/route.ts
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import dbConnect from '@/lib/db';
 import Task from '@/models/Task';
+import { authOptions } from '@/lib/auth';
 
-export async function GET(
+// Helper to get the current user's ID from session
+const getUserId = async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    throw new Error('Not authenticated');
+  }
+  return (session.user as any).id;
+};
+
+export const GET = async (
   request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
+    const userId = await getUserId();
     await dbConnect();
-    const task = await Task.findById(params.id);
+    
+    // Only allow access to the user's own tasks
+    const task = await Task.findOne({ _id: params.id, userId });
     
     if (!task) {
-      return NextResponse.json({ error: 'Aufgabe nicht gefunden' }, { status: 404 });
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
     
     return NextResponse.json(task);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 
-      : 'Ein unbekannter Fehler ist aufgetreten';
+      : 'An unknown error occurred';
+    
+    console.error('GET task error:', error);
+    
+    if (errorMessage === 'Not authenticated') {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
     
     return NextResponse.json({ 
-      error: 'Fehler beim Abrufen der Aufgabe',
+      error: 'Error retrieving task',
       details: errorMessage 
     }, { status: 500 });
   }
-}
+};
 
-export async function PUT(
+export const PUT = async (
   request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
+    const userId = await getUserId();
     const body = await request.json();
     await dbConnect();
     
-    const task = await Task.findByIdAndUpdate(
-      params.id,
+    // Only allow updates to the user's own tasks
+    const task = await Task.findOneAndUpdate(
+      { _id: params.id, userId },
       {
         date: body.date,
         time: body.time,
@@ -47,33 +70,41 @@ export async function PUT(
     );
     
     if (!task) {
-      return NextResponse.json({ error: 'Aufgabe nicht gefunden' }, { status: 404 });
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
     
     return NextResponse.json(task);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 
-      : 'Ein unbekannter Fehler ist aufgetreten';
+      : 'An unknown error occurred';
+    
+    console.error('PUT task error:', error);
+    
+    if (errorMessage === 'Not authenticated') {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
     
     return NextResponse.json({ 
-      error: 'Fehler beim Aktualisieren der Aufgabe',
+      error: 'Error updating task',
       details: errorMessage 
     }, { status: 500 });
   }
-}
+};
 
-export async function PATCH(
+export const PATCH = async (
   request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
+    const userId = await getUserId();
     await dbConnect();
     
-    const task = await Task.findById(params.id);
+    // Only allow toggling of the user's own tasks
+    const task = await Task.findOne({ _id: params.id, userId });
     
     if (!task) {
-      return NextResponse.json({ error: 'Aufgabe nicht gefunden' }, { status: 404 });
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
     
     task.isDone = !task.isDone;
@@ -83,36 +114,51 @@ export async function PATCH(
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 
-      : 'Ein unbekannter Fehler ist aufgetreten';
+      : 'An unknown error occurred';
+    
+    console.error('PATCH task error:', error);
+    
+    if (errorMessage === 'Not authenticated') {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
     
     return NextResponse.json({ 
-      error: 'Fehler beim Umschalten des Status',
+      error: 'Error toggling task status',
       details: errorMessage 
     }, { status: 500 });
   }
-}
+};
 
-export async function DELETE(
+export const DELETE = async (
   request: Request,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
+    const userId = await getUserId();
     await dbConnect();
-    const task = await Task.findByIdAndDelete(params.id);
+    
+    // Only allow deletion of the user's own tasks
+    const task = await Task.findOneAndDelete({ _id: params.id, userId });
     
     if (!task) {
-      return NextResponse.json({ error: 'Aufgabe nicht gefunden' }, { status: 404 });
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
     
-    return NextResponse.json({ message: 'Aufgabe gelöscht' });
+    return NextResponse.json({ message: 'Task deleted' });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 
-      : 'Ein unbekannter Fehler ist aufgetreten';
+      : 'An unknown error occurred';
+    
+    console.error('DELETE task error:', error);
+    
+    if (errorMessage === 'Not authenticated') {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
     
     return NextResponse.json({ 
-      error: 'Fehler beim Löschen der Aufgabe',
+      error: 'Error deleting task',
       details: errorMessage 
     }, { status: 500 });
   }
-}
+};

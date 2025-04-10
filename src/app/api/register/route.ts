@@ -1,41 +1,42 @@
+// src/app/api/register/route.ts
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 
-export async function POST(request: Request) {
+export const POST = async (request: Request) => {
   try {
     const { name, email, password } = await request.json();
     
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Alle Felder müssen ausgefüllt sein' },
+        { error: 'All fields must be filled out' },
         { status: 400 }
       );
     }
     
     await dbConnect();
     
-    // Prüfen, ob der Benutzer bereits existiert
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Diese E-Mail-Adresse wird bereits verwendet' },
+        { error: 'This email address is already in use' },
         { status: 400 }
       );
     }
     
-    // Passwort hashen
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Neuen Benutzer erstellen
+    // Create new user
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
     });
     
-    // Persönliche Daten entfernen und Antwort senden
+    // Remove sensitive data and send response
     const result = {
       id: user._id,
       name: user.name,
@@ -46,11 +47,11 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 
-      : 'Ein unbekannter Fehler ist aufgetreten';
+      : 'An unknown error occurred';
     
     return NextResponse.json(
-      { error: 'Registrierung fehlgeschlagen', details: errorMessage },
+      { error: 'Registration failed', details: errorMessage },
       { status: 500 }
     );
   }
-}
+};

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function Register() {
+const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,10 +29,10 @@ export default function Register() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registrierung fehlgeschlagen');
+        throw new Error(data.error || 'Registration failed');
       }
 
-      router.push('/login?success=Registrierung erfolgreich! Bitte melde dich an.');
+      router.push('/login?success=Registration successful! Please sign in.');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -43,7 +43,7 @@ export default function Register() {
   return (
     <div className="login-container">
       <div className="login-form">
-        <h1>Registrieren</h1>
+        <h1>Register</h1>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -67,7 +67,7 @@ export default function Register() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Passwort</label>
+            <label htmlFor="password">Password</label>
             <input
               id="password"
               type="password"
@@ -81,13 +81,15 @@ export default function Register() {
             className="login-button" 
             disabled={loading}
           >
-            {loading ? 'Wird registriert...' : 'Registrieren'}
+            {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
         <p className="signup-link">
-          Bereits registriert? <Link href="/login">Anmelden</Link>
+          Already registered? <Link href="/login">Sign In</Link>
         </p>
       </div>
     </div>
   );
-}
+};
+
+export default Register;

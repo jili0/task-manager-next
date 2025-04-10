@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function Login() {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +31,7 @@ export default function Login() {
         router.refresh();
       }
     } catch (err) {
-      setError('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
+      setError('An error occurred. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-form">
-        <h1>Anmelden</h1>
+        <h1>Sign In</h1>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -54,7 +54,7 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Passwort</label>
+            <label htmlFor="password">Password</label>
             <input
               id="password"
               type="password"
@@ -68,13 +68,15 @@ export default function Login() {
             className="login-button" 
             disabled={loading}
           >
-            {loading ? 'Wird angemeldet...' : 'Anmelden'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
         <p className="signup-link">
-          Noch kein Konto? <Link href="/register">Registrieren</Link>
+          Don't have an account? <Link href="/register">Register</Link>
         </p>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

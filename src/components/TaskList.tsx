@@ -1,3 +1,4 @@
+// src/components/TaskList.tsx
 import React, { useState } from 'react';
 import TaskItem from './TaskItem';
 import TaskInput from './TaskInput';
@@ -11,13 +12,13 @@ interface TaskListProps {
   onToggleTaskDone: (taskId: string) => void;
 }
 
-function TaskList({ 
+const TaskList = ({ 
   tasks, 
   onAddTask, 
   onUpdateTask, 
   onDeleteTask, 
   onToggleTaskDone 
-}: TaskListProps) {
+}: TaskListProps) => {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
   const handleEditTask = (taskId: string) => {
@@ -46,6 +47,6 @@ function TaskList({
       <TaskInput onAddTask={onAddTask} />
     </div>
   );
-}
+};
 
 export default TaskList;
