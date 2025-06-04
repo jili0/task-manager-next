@@ -1,4 +1,3 @@
-// src/app/api/db-status/route.ts
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 
@@ -12,7 +11,7 @@ export async function GET() {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 
-      : 'Ein unbekannter Fehler ist aufgetreten';
+      : 'An unknown error occurred';
     
     return NextResponse.json({ 
       status: 'error', 

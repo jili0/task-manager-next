@@ -10,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +52,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
           </div>
           <div className="form-group">
@@ -61,7 +63,20 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              id="remember"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ width: 'auto' }}
+            />
+            <label htmlFor="remember" style={{ marginBottom: 0 }}>
+              Keep me signed in for 30 days
+            </label>
           </div>
           <button 
             type="submit" 

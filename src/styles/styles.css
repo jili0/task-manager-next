@@ -1,4 +1,4 @@
-/* Allgemeine Stile */
+/* General styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -32,7 +32,7 @@ body {
 }
 
 /* Header */
-/* Verbesserte Header-Styles */
+/* Improved header styles */
 .header {
   background-color: #fff;
   border-bottom: 1px solid #e5e5e5;
@@ -156,12 +156,12 @@ body {
   padding: 4px 8px;
 }
 
-/* Task Liste */
+/* Task list */
 .task-list {
   width: 100%;
 }
 
-/* Task Eintrag */
+/* Task item */
 .task-item {
   display: flex;
   border-bottom: 1px solid #e5e5e5;
@@ -209,7 +209,7 @@ body {
   gap: 8px;
 }
 
-/* Task Input */
+/* Task input */
 .task-input {
   display: flex;
   border-bottom: 1px solid #e5e5e5;
@@ -255,7 +255,7 @@ input {
   background-color: transparent;
 }
 
-/* Druckstile */
+/* Print styles */
 @media print {
   .btn {
     display: none;
@@ -350,8 +350,8 @@ input {
   margin-top: 1.5rem;
   text-align: center;
 }
-/* Add this to your styles.css file */
 
+/* Error banner */
 .error-banner {
   background-color: #fee2e2;
   color: #dc2626;

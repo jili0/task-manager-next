@@ -32,6 +32,7 @@ const TaskList = ({
 
   return (
     <div className="task-list">
+      <TaskInput onAddTask={onAddTask} />
       {tasks.map((task, index) => (
         <TaskItem
           key={task._id}
@@ -44,7 +45,6 @@ const TaskList = ({
           onToggleDone={() => onToggleTaskDone(task._id as string)}
         />
       ))}
-      <TaskInput onAddTask={onAddTask} />
     </div>
   );
 };
