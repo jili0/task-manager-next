@@ -122,6 +122,22 @@ body {
   border-radius: 4px;
 }
 
+/* Größerer Add-Button */
+.btn-add-large {
+  padding: 6px 12px;
+}
+
+.btn-add-large svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* SVG Icons in Buttons */
+.btn svg {
+  display: block;
+  margin: 0 auto;
+}
+
 .btn-save {
   color: #16a34a;
   padding: 4px 8px;
@@ -347,6 +363,22 @@ input[type="text"] {
     font-size: 10px;
   }
 
+  /* Add-Button bleibt größer auf Mobile */
+  .btn-add-large {
+    padding: 4px 8px;
+  }
+
+  .btn-add-large svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Mobile SVG Größen */
+  .btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
   /* Compact task layout for mobile */
   .task-item,
   .task-input {
@@ -480,6 +512,22 @@ input[type="text"] {
   .btn-done {
     padding: 2px 3px;
     font-size: 9px;
+  }
+
+  /* Add-Button bleibt größer auch auf kleinsten Geräten */
+  .btn-add-large {
+    padding: 3px 6px;
+  }
+
+  .btn-add-large svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Extra kleine Mobile SVG Größen */
+  .btn svg {
+    width: 10px;
+    height: 10px;
   }
 
   input[type="text"] {
