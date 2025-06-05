@@ -30,7 +30,7 @@ const TaskItem = ({
   });
   
   const timeInputRef = useRef<HTMLInputElement>(null);
-  const textInputRef = useRef<HTMLInputElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setEditedTask({
@@ -41,7 +41,15 @@ const TaskItem = ({
     });
   }, [task]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = 'auto';
+      textAreaRef.current.style.height = textAreaRef.current.scrollHeight + 'px';
+    }
+  }, [editedTask.text]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
     // Special handling for date formatting
@@ -99,7 +107,7 @@ const TaskItem = ({
     }));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       // Special handling for date field - move focus to time field
       if (e.currentTarget.name === 'date') {
@@ -139,13 +147,21 @@ const TaskItem = ({
         }
         
         // Move focus to text field
-        if (textInputRef.current) {
-          textInputRef.current.focus();
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
         }
         return;
       }
       
-      // Save task on Enter in text field
+      // For textarea, Enter creates new line (normal behavior)
+      if (e.currentTarget.name === 'text') {
+        // Allow normal Enter for new lines
+        return;
+      }
+    }
+    
+    // Escape key saves the task
+    if (e.key === 'Escape') {
       saveTask();
     }
   };
@@ -186,14 +202,14 @@ const TaskItem = ({
           />
         </div>
         <div className="task-item-text">
-          <input
-            type="text"
+          <textarea
             name="text"
             value={editedTask.text}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Task"
-            ref={textInputRef}
+            ref={textAreaRef}
+            className="task-edit-textarea"
           />
         </div>
         <div className="task-item-actions">
@@ -226,7 +242,12 @@ const TaskItem = ({
         {task.time || ' '}
       </div>
       <div className="task-item-text">
-        {task.text || ' '}
+        {task.text ? task.text.split('\n').map((line, i) => (
+          <React.Fragment key={i}>
+            {line}
+            {i < task.text.split('\n').length - 1 && <br />}
+          </React.Fragment>
+        )) : ' '}
       </div>
       <div className="task-item-actions">
         <button 
