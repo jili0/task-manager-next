@@ -1,5 +1,5 @@
 // src/components/TaskInput.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TaskFormData } from '@/types';
 import { formatDate, formatTime } from '@/lib/utils';
 
@@ -13,11 +13,27 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
     time: '',
     text: ''
   });
-  const timeInputRef = useRef<HTMLInputElement>(null);
-  const textInputRef = useRef<HTMLInputElement>(null);
+  const timeTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-resize textarea function
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
+
+  // Adjust height when text changes
+  useEffect(() => {
+    if (textAreaRef.current) {
+      adjustTextareaHeight(textAreaRef.current);
+    }
+  }, [newTask.text]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // Auto-resize on change
+    adjustTextareaHeight(e.target);
     
     // Special handling for date formatting
     if (name === 'date') {
@@ -80,7 +96,7 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
     }));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       // Special handling for date field
       if (e.currentTarget.name === 'date') {
@@ -98,8 +114,8 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
         }
         
         // Move focus to time field
-        if (timeInputRef.current) {
-          timeInputRef.current.focus();
+        if (timeTextareaRef.current) {
+          timeTextareaRef.current.focus();
         }
         return;
       }
@@ -120,14 +136,17 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
         }
         
         // Move focus to text field
-        if (textInputRef.current) {
-          textInputRef.current.focus();
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
         }
         return;
       }
       
-      // Add task when Enter is pressed in text field
-      handleAddTask();
+      // For text area, allow Enter for new lines, but Ctrl+Enter adds task
+      if (e.currentTarget.name === 'text' && e.ctrlKey) {
+        e.preventDefault();
+        handleAddTask();
+      }
     }
   };
 
@@ -147,41 +166,44 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
   return (
     <div className="task-input">
       <div className="task-input-date">
-        <input
-          type="text"
+        <textarea
           name="date"
           value={newTask.date}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Date"
+          rows={1}
+          className="task-input-field"
         />
       </div>
       <div className="task-input-time">
-        <input
-          type="text"
+        <textarea
           name="time"
           value={newTask.time}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Time"
-          ref={timeInputRef}
+          ref={timeTextareaRef}
+          rows={1}
+          className="task-input-field"
         />
       </div>
       <div className="task-input-text">
-        <input
-          type="text"
+        <textarea
           name="text"
           value={newTask.text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Task"
-          ref={textInputRef}
+          ref={textAreaRef}
+          rows={1}
+          className="task-input-textarea"
         />
       </div>
       <div className="task-input-actions">
         <button 
           onClick={handleAddTask}
-          className="btn btn-add btn-add-large"
+          className="btn btn-add"
           title="Add Task"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

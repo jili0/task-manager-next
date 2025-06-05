@@ -74,7 +74,7 @@ export const formatDate = (inputDate: string): string => {
     const year = 2000 + parseInt(inputDate.substring(4, 6));
     
     const date = new Date(`${year}-${month}-${day}`);
-    const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']; // German weekdays
     const weekday = days[date.getDay()];
     
     return `${weekday}, ${day}.${month}.${year}`;
@@ -86,7 +86,7 @@ export const formatDate = (inputDate: string): string => {
     const month = inputDate.substring(2, 4);
     
     const date = new Date(`${currentYear}-${month}-${day}`);
-    const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']; // German weekdays
     const weekday = days[date.getDay()];
     
     return `${weekday}, ${day}.${month}.${currentYear}`;
@@ -98,7 +98,7 @@ export const formatDate = (inputDate: string): string => {
     const month = currentMonth;
     
     const date = new Date(`${currentYear}-${month}-${day}`);
-    const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']; // German weekdays
     const weekday = days[date.getDay()];
     
     return `${weekday}, ${day}.${month}.${currentYear}`;

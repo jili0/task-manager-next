@@ -122,22 +122,6 @@ body {
   border-radius: 4px;
 }
 
-/* Größerer Add-Button */
-.btn-add-large {
-  padding: 6px 12px;
-}
-
-.btn-add-large svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* SVG Icons in Buttons */
-.btn svg {
-  display: block;
-  margin: 0 auto;
-}
-
 .btn-save {
   color: #16a34a;
   padding: 4px 8px;
@@ -170,6 +154,12 @@ body {
 
 .btn-done {
   padding: 4px 8px;
+}
+
+/* SVG Icons in Buttons */
+.btn svg {
+  display: block;
+  margin: 0 auto;
 }
 
 /* Task list */
@@ -238,10 +228,20 @@ body {
 
 .task-input-date,
 .task-input-time,
-.task-input-text,
-.task-input-actions {
-  padding: 8px;
+.task-input-text {
+  padding: 4px;
   border-right: 1px solid #e5e5e5;
+  display: flex;
+  align-items: flex-start;
+}
+
+.task-input-actions {
+  padding: 4px;
+  border-right: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 8px; /* Align button with textarea baseline */
 }
 
 .task-input-date {
@@ -266,14 +266,20 @@ body {
 /* Inputs */
 input[type="text"] {
   width: 100%;
-  padding: 4px 0;
-  border: none;
+  padding: 2px 6px; /* Same as textarea */
+  border: 1px solid #d1d5db; /* Same border as textarea */
+  border-radius: 4px;
   outline: none;
-  background-color: transparent;
+  background-color: #fff;
   font-size: 14px;
   line-height: 1.5;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: #3b82f6;
 }
 
 /* Edit textarea styling */
@@ -290,32 +296,75 @@ input[type="text"] {
   overflow: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  min-height: 6em; /* 4 Zeilen (1.5em x 4) */
+  min-height: 6em; /* 4 lines (1.5em x 4) */
 }
 
-/* Edit inputs sollten sich an den Textinhalt anpassen */
+/* Edit inputs should adapt to text content */
 .task-item input[type="text"] {
   min-height: 1.5em;
   height: auto;
+  border: none; /* Edit inputs stay transparent */
+  background-color: transparent;
+  padding: 4px 0;
+}
+
+.task-item input[type="text"]:focus {
+  border: none;
 }
 
 .task-input input[type="text"] {
   background-color: #fff;
   border: 1px solid #d1d5db;
-  padding: 4px 8px;
+  padding: 2px 6px; /* Reduced padding */
   border-radius: 4px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
+  font-size: 14px; /* Same as normal task text on desktop */
+  font-family: inherit;
+  line-height: 1.5;
 }
 
 .task-input input[type="text"]:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 1px #3b82f6;
+  outline: none;
+}
+
+/* Task input field styling (ALL fields are now textareas) */
+.task-input-field,
+.task-input-textarea {
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: none;
+  min-height: 24px;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.task-input-field:focus,
+.task-input-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Placeholder styles for all inputs */
+input[type="text"]::placeholder,
+.task-edit-textarea::placeholder,
+.task-input-textarea::placeholder,
+.task-input-field::placeholder {
+  text-align: center;
+  font: inherit;
 }
 
 /* Mobile responsive styles */
 @media (max-width: 768px) {
   .container {
-    padding: 0 16px; /* Mehr padding-x für Header */
+    padding: 0 16px; /* More padding-x for header */
   }
 
   .header-content {
@@ -363,17 +412,7 @@ input[type="text"] {
     font-size: 10px;
   }
 
-  /* Add-Button bleibt größer auf Mobile */
-  .btn-add-large {
-    padding: 4px 8px;
-  }
-
-  .btn-add-large svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  /* Mobile SVG Größen */
+  /* Mobile SVG sizes */
   .btn svg {
     width: 12px;
     height: 12px;
@@ -399,10 +438,10 @@ input[type="text"] {
   /* Optimized column widths for mobile */
   .task-item-date,
   .task-input-date {
-    width: 30%; /* Noch mehr Breite für Date */
+    width: 30%; /* More width for date */
     font-size: 12px;
     white-space: nowrap;
-    text-align: center; /* Horizontal zentriert */
+    text-align: center; /* Horizontally centered */
   }
 
   .task-item-time,
@@ -410,7 +449,7 @@ input[type="text"] {
     width: 18%;
     font-size: 12px;
     white-space: nowrap;
-    text-align: center; /* Horizontal zentriert */
+    text-align: center; /* Horizontally centered */
   }
 
   .task-item-text,
@@ -423,14 +462,19 @@ input[type="text"] {
 
   .task-item-actions,
   .task-input-actions {
-    width: 10%; /* Schmaler - vertikale Buttons */
+    width: 10%; /* Narrower - vertical buttons */
     gap: 2px;
-    flex-direction: column; /* Buttons vertikal anordnen */
+    flex-direction: column; /* Arrange buttons vertically */
     justify-content: center;
     align-items: center;
   }
 
-  /* Placeholder zentriert und font: inherit */
+  /* Placeholder centered and font: inherit for all inputs */
+  input[type="text"]::placeholder {
+    text-align: center;
+    font: inherit;
+  }
+
   .task-input input[type="text"]::placeholder {
     text-align: center;
     font: inherit;
@@ -438,12 +482,44 @@ input[type="text"] {
 
   /* Mobile input styles */
   input[type="text"] {
-    padding: 3px 4px;
+    padding: 2px 4px; /* Same as textarea */
     font-size: 12px;
   }
 
+  /* Edit inputs stay transparent on mobile */
+  .task-item input[type="text"] {
+    border: none;
+    background-color: transparent;
+    padding: 3px 4px;
+  }
+
   .task-input input[type="text"] {
-    font-size: 14px;
+    font-size: 12px;
+    font-family: inherit;
+    line-height: 1.5;
+    padding: 2px 4px;
+    border: 1px solid #d1d5db;
+    background-color: #fff;
+    border-radius: 4px;
+  }
+
+  .task-input input[type="text"]:focus {
+    border-color: #3b82f6;
+    outline: none;
+  }
+
+  /* Mobile task input styles */
+  .task-input-field,
+  .task-input-textarea {
+    font-size: 12px;
+    font-family: inherit;
+    line-height: 1.5;
+    padding: 3px 6px;
+    word-wrap: break-word;
+  }
+
+  .task-input-actions {
+    padding-top: 6px; /* Align button with textarea baseline */
   }
 
   /* Login form mobile adjustments */
@@ -470,7 +546,7 @@ input[type="text"] {
 /* Extra small mobile devices */
 @media (max-width: 480px) {
   .container {
-    padding: 0 20px; /* Noch mehr padding-x für kleine Geräte */
+    padding: 0 20px; /* Even more padding-x for small devices */
   }
 
   .header-title {
@@ -502,7 +578,7 @@ input[type="text"] {
 
   .task-item-actions,
   .task-input-actions {
-    width: 8%; /* Noch schmaler auf kleinen Geräten */
+    width: 8%; /* Even narrower on small devices */
   }
 
   .btn-add,
@@ -514,17 +590,7 @@ input[type="text"] {
     font-size: 9px;
   }
 
-  /* Add-Button bleibt größer auch auf kleinsten Geräten */
-  .btn-add-large {
-    padding: 3px 6px;
-  }
-
-  .btn-add-large svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  /* Extra kleine Mobile SVG Größen */
+  /* Extra small mobile SVG sizes */
   .btn svg {
     width: 10px;
     height: 10px;
