@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -38,10 +38,10 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name
+          name: user.name,
         };
-      }
-    })
+      },
+    }),
   ],
   session: {
     strategy: "jwt",
@@ -55,16 +55,16 @@ export const authOptions: NextAuthOptions = {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60 // 30 days
-      }
-    }
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60,
+      },
+    },
   },
   pages: {
     signIn: "/login",
-    signOut: "/"
+    signOut: "/",
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
@@ -85,7 +85,7 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
       }
       return session;
-    }
+    },
   },
-  debug: process.env.NODE_ENV === 'development'
+  debug: process.env.NODE_ENV === "development",
 };
