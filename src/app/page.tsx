@@ -19,14 +19,19 @@ const Home = () => {
 
   // Redirect to login page if not authenticated
   useEffect(() => {
+    // WICHTIG: Warte bis die Session geladen ist
+    if (status === 'loading') {
+      return; // Mache nichts während des Ladens
+    }
+    
     if (status === 'unauthenticated') {
       router.push('/login');
     }
   }, [status, router]);
 
-  // Load tasks from server on first render or when session changes
+  // Load tasks from server when authenticated
   useEffect(() => {
-    // Only load tasks if user is authenticated
+    // WICHTIG: Nur laden wenn wirklich authentifiziert
     if (status === 'authenticated' && session?.user) {
       const fetchTasks = async () => {
         try {
@@ -37,12 +42,10 @@ const Home = () => {
             const data = await response.json();
             setTasks(data);
           } else if (response.status === 401) {
-            // Session might be expired, redirect to login
             router.push('/login');
           } else {
             const errorData = await response.json();
             setError(errorData.error || 'Failed to load tasks');
-            console.error('API error:', errorData);
           }
         } catch (error) {
           setError('Error connecting to the server');
@@ -53,12 +56,13 @@ const Home = () => {
       };
 
       fetchTasks();
+    } else if (status === 'unauthenticated') {
+      setLoading(false);
     }
   }, [status, session, router]);
 
-  // API functions for task operations
+  // API functions
   const taskApi = {
-    // Add a new task
     addTask: async (newTask: any) => {
       try {
         setError(null);
@@ -78,7 +82,6 @@ const Home = () => {
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'Failed to add task');
-          console.error('API error:', errorData);
         }
       } catch (error) {
         setError('Error connecting to the server');
@@ -86,7 +89,6 @@ const Home = () => {
       }
     },
 
-    // Update an existing task
     updateTask: async (updatedTask: ITask) => {
       try {
         setError(null);
@@ -108,7 +110,6 @@ const Home = () => {
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'Failed to update task');
-          console.error('API error:', errorData);
         }
       } catch (error) {
         setError('Error connecting to the server');
@@ -116,7 +117,6 @@ const Home = () => {
       }
     },
 
-    // Delete a task
     deleteTask: async (taskId: string) => {
       try {
         setError(null);
@@ -131,7 +131,6 @@ const Home = () => {
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'Failed to delete task');
-          console.error('API error:', errorData);
         }
       } catch (error) {
         setError('Error connecting to the server');
@@ -139,7 +138,6 @@ const Home = () => {
       }
     },
 
-    // Toggle task completion status
     toggleTaskDone: async (taskId: string) => {
       try {
         setError(null);
@@ -157,7 +155,6 @@ const Home = () => {
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'Failed to toggle task status');
-          console.error('API error:', errorData);
         }
       } catch (error) {
         setError('Error connecting to the server');
@@ -165,7 +162,6 @@ const Home = () => {
       }
     },
 
-    // Clear all tasks
     clearTasks: async () => {
       if (window.confirm('Are you sure you want to delete all tasks?')) {
         try {
@@ -181,7 +177,6 @@ const Home = () => {
           } else {
             const errorData = await response.json();
             setError(errorData.error || 'Failed to clear tasks');
-            console.error('API error:', errorData);
           }
         } catch (error) {
           setError('Error connecting to the server');
@@ -191,14 +186,18 @@ const Home = () => {
     },
   };
 
-  // Simple print function
   const printTasks = () => {
     window.print();
   };
 
-  // Show loading indicator
-  if (status === 'loading' || status === 'unauthenticated') {
+  // WICHTIG: Zeige Loading während Session-Check
+  if (status === 'loading') {
     return <div className="loading">Loading...</div>;
+  }
+
+  // Wenn nicht authentifiziert, zeige nichts (Redirect läuft bereits)
+  if (status === 'unauthenticated') {
+    return null;
   }
 
   if (loading) {
