@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" },
+        password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -38,10 +38,10 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user._id.toString(),
           email: user.email,
-          name: user.name,
+          name: user.name
         };
-      },
-    }),
+      }
+    })
   ],
   session: {
     strategy: "jwt",
@@ -50,50 +50,30 @@ export const authOptions: NextAuthOptions = {
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-      },
-    },
-  },
   pages: {
     signIn: "/login",
-    signOut: "/",
+    signOut: "/"
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    // Save the user ID in the token when a user signs in
     jwt: async ({ token, user }) => {
-      console.log("JWT Callback - User:", user);
-      console.log("JWT Callback - Token before:", token);
-
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
       }
-
-      console.log("JWT Callback - Token after:", token);
       return token;
     },
+    // Include the user ID in the session
     session: async ({ session, token }) => {
-      console.log("Session Callback - Token:", token);
-      console.log("Session Callback - Session before:", session);
-
       if (session?.user && token) {
         (session.user as any).id = token.id;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
       }
-
-      console.log("Session Callback - Session after:", session);
       return session;
-    },
+    }
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: process.env.NODE_ENV === 'development'
 };
