@@ -16,14 +16,15 @@ const getUserId = async () => {
 
 export const GET = async (
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
+    const { id } = await params; // Await params
     const userId = await getUserId();
     await dbConnect();
     
     // Only allow access to the user's own tasks
-    const task = await Task.findOne({ _id: params.id, userId });
+    const task = await Task.findOne({ _id: id, userId });
     
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -50,16 +51,17 @@ export const GET = async (
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
+    const { id } = await params; // Await params
     const userId = await getUserId();
     const body = await request.json();
     await dbConnect();
     
     // Only allow updates to the user's own tasks
     const task = await Task.findOneAndUpdate(
-      { _id: params.id, userId },
+      { _id: id, userId },
       {
         date: body.date,
         time: body.time,
@@ -94,14 +96,15 @@ export const PUT = async (
 
 export const PATCH = async (
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
+    const { id } = await params; // Await params
     const userId = await getUserId();
     await dbConnect();
     
     // Only allow toggling of the user's own tasks
-    const task = await Task.findOne({ _id: params.id, userId });
+    const task = await Task.findOne({ _id: id, userId });
     
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -131,14 +134,15 @@ export const PATCH = async (
 
 export const DELETE = async (
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
+    const { id } = await params; // Await params
     const userId = await getUserId();
     await dbConnect();
     
     // Only allow deletion of the user's own tasks
-    const task = await Task.findOneAndDelete({ _id: params.id, userId });
+    const task = await Task.findOneAndDelete({ _id: id, userId });
     
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
