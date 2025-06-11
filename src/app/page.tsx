@@ -162,28 +162,6 @@ const Home = () => {
       }
     },
 
-    clearTasks: async () => {
-      if (window.confirm('Are you sure you want to delete all tasks?')) {
-        try {
-          setError(null);
-          const response = await fetch('/api/tasks', {
-            method: 'DELETE',
-          });
-
-          if (response.ok) {
-            setTasks([]);
-          } else if (response.status === 401) {
-            router.push('/login');
-          } else {
-            const errorData = await response.json();
-            setError(errorData.error || 'Failed to clear tasks');
-          }
-        } catch (error) {
-          setError('Error connecting to the server');
-          console.error('Error deleting all tasks:', error);
-        }
-      }
-    },
   };
 
   const printTasks = () => {
@@ -208,7 +186,6 @@ const Home = () => {
     <div className="app-container">
       <Header 
         title="Task Manager" 
-        onClear={taskApi.clearTasks}
         onPrint={printTasks}
         userName={session?.user?.name || ''}
       />
