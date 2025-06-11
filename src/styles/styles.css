@@ -733,3 +733,49 @@ input[type="text"]::placeholder,
 .error-banner button:hover {
   text-decoration: underline;
 }
+
+.btn-history {
+  color: #2563eb;
+  border-color: #93c5fd;
+}
+
+.btn-history:hover {
+  background-color: #eff6ff;
+}
+
+/* Search row styles */
+.search-row {
+  background-color: #f3f4f6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.search-row input {
+  background-color: #fff;
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  outline: none;
+  font-size: 14px;
+}
+
+.search-row input:focus {
+  border-color: #3b82f6;
+}
+
+/* Mark (highlight) styles */
+mark {
+  background-color: #fef08a;
+  color: inherit;
+  padding: 0;
+}
+
+/* Mobile styles for search */
+@media (max-width: 768px) {
+  .search-row input {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+}
