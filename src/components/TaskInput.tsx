@@ -171,7 +171,7 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
           value={newTask.date}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Date"
+          placeholder="Add Date"
           rows={1}
           className="task-input-field"
         />
@@ -182,7 +182,7 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
           value={newTask.time}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Time"
+          placeholder="Add Time"
           ref={timeTextareaRef}
           rows={1}
           className="task-input-field"
@@ -194,7 +194,7 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
           value={newTask.text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="Task"
+          placeholder="Add Task"
           ref={textAreaRef}
           rows={1}
           className="task-input-textarea"

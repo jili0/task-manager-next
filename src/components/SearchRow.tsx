@@ -17,7 +17,7 @@ const SearchRow = ({ searchTerms, onSearchChange }: SearchRowProps) => {
       <div className="task-item-date">
         <input
           type="text"
-          placeholder="Search date..."
+          placeholder="Search Date"
           value={searchTerms.date}
           onChange={(e) => onSearchChange('date', e.target.value)}
         />
@@ -25,7 +25,7 @@ const SearchRow = ({ searchTerms, onSearchChange }: SearchRowProps) => {
       <div className="task-item-time">
         <input
           type="text"
-          placeholder="Search time..."
+          placeholder="Search Time"
           value={searchTerms.time}
           onChange={(e) => onSearchChange('time', e.target.value)}
         />
@@ -33,7 +33,7 @@ const SearchRow = ({ searchTerms, onSearchChange }: SearchRowProps) => {
       <div className="task-item-text">
         <input
           type="text"
-          placeholder="Search task..."
+          placeholder="Search Task"
           value={searchTerms.text}
           onChange={(e) => onSearchChange('text', e.target.value)}
         />
