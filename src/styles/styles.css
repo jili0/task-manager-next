@@ -1,4 +1,4 @@
-/* General styles */
+/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -24,7 +24,6 @@ body {
   min-height: 100vh;
 }
 
-/* Container */
 .container {
   max-width: 960px;
   margin: 0 auto;
@@ -32,7 +31,6 @@ body {
 }
 
 /* Header */
-/* Improved header styles */
 .header {
   background-color: #fff;
   border-bottom: 1px solid #e5e5e5;
@@ -74,8 +72,7 @@ body {
   font-weight: 500;
 }
 
-/* Buttons */
-
+/* Buttons - Base styles */
 .btn {
   padding: 4px 16px;
   font-size: 14px;
@@ -83,14 +80,21 @@ body {
   border-radius: 4px;
   border: 1px solid transparent;
   background-color: transparent;
+  transition: background-color 0.2s;
 }
 
-.btn-print {
+.btn svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Button variants */
+.btn-print, .btn-history {
   color: #2563eb;
   border-color: #93c5fd;
 }
 
-.btn-print:hover {
+.btn-print:hover, .btn-history:hover {
   background-color: #eff6ff;
 }
 
@@ -105,16 +109,19 @@ body {
 
 .btn-logout {
   color: #4b5563;
-  border: 1px solid #9ca3af; 
+  border: 1px solid #9ca3af;
 }
 
 .btn-logout:hover {
   background-color: #f3f4f6;
 }
 
+.btn-add, .btn-save, .btn-cancel, .btn-delete, .btn-done {
+  padding: 4px 8px;
+}
+
 .btn-add {
   color: #2563eb;
-  padding: 4px 8px;
 }
 
 .btn-add:hover {
@@ -124,7 +131,6 @@ body {
 
 .btn-save {
   color: #16a34a;
-  padding: 4px 8px;
 }
 
 .btn-save:hover {
@@ -134,7 +140,6 @@ body {
 
 .btn-cancel {
   color: #6b7280;
-  padding: 4px 8px;
 }
 
 .btn-cancel:hover {
@@ -144,7 +149,6 @@ body {
 
 .btn-delete {
   color: #dc2626;
-  padding: 4px 8px;
 }
 
 .btn-delete:hover {
@@ -152,31 +156,24 @@ body {
   border-radius: 4px;
 }
 
-.btn-done {
-  padding: 4px 8px;
-}
-
-/* SVG Icons in Buttons */
-.btn svg {
-  display: block;
-  margin: 0 auto;
-}
-
 /* Task list */
 .task-list {
   width: 100%;
 }
 
-/* Task item */
-.task-item {
+/* Task item and Search row - shared styles */
+.task-item, .search-row, .task-input {
   display: flex;
   border-bottom: 1px solid #e5e5e5;
   min-height: 42px;
   align-items: flex-start;
+}
+
+.task-item {
   cursor: pointer;
 }
 
-.task-item:nth-child(even) {
+.task-item:nth-child(even):not(.search-row) {
   background-color: #f9fafb;
 }
 
@@ -186,10 +183,21 @@ body {
   text-decoration: line-through;
 }
 
-.task-item-date,
-.task-item-time,
-.task-item-text,
-.task-item-actions {
+.search-row {
+  background-color: #f3f4f6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: default;
+}
+
+.task-input {
+  background-color: #fff;
+}
+
+/* Column styles - shared for task items, search row, and task input */
+.task-item-date, .task-item-time, .task-item-text, .task-item-actions,
+.task-input-date, .task-input-time, .task-input-text, .task-input-actions {
   padding: 8px;
   border-right: 1px solid #e5e5e5;
   min-height: inherit;
@@ -197,19 +205,19 @@ body {
   align-items: flex-start;
 }
 
-.task-item-date {
+.task-item-date, .task-input-date {
   width: 25%;
 }
 
-.task-item-time {
+.task-item-time, .task-input-time {
   width: 16.666%;
 }
 
-.task-item-text {
+.task-item-text, .task-input-text {
   flex: 1;
 }
 
-.task-item-actions {
+.task-item-actions, .task-input-actions {
   width: 16.666%;
   display: flex;
   justify-content: center;
@@ -217,72 +225,65 @@ body {
   border-right: none;
 }
 
-/* Task input */
-.task-input {
-  display: flex;
-  border-bottom: 1px solid #e5e5e5;
-  min-height: 42px;
-  align-items: flex-start;
-  background-color: #fff;
-}
-
-.task-input-date,
-.task-input-time,
-.task-input-text {
+.task-input-date, .task-input-time, .task-input-text {
   padding: 4px;
-  border-right: 1px solid #e5e5e5;
-  display: flex;
-  align-items: flex-start;
 }
 
 .task-input-actions {
   padding: 4px;
-  border-right: none;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
   padding-top: 8px; /* Align button with textarea baseline */
 }
 
-.task-input-date {
-  width: 25%;
-}
-
-.task-input-time {
-  width: 16.666%;
-}
-
-.task-input-text {
-  flex: 1;
-}
-
-.task-input-actions {
-  width: 16.666%;
-  display: flex;
-  justify-content: center;
-  border-right: none;
-}
-
-/* Inputs */
-input[type="text"] {
+/* Input styles - shared base */
+input[type="text"], .task-input-field, .task-input-textarea {
   width: 100%;
-  padding: 2px 6px; /* Same as textarea */
-  border: 1px solid #d1d5db; /* Same border as textarea */
+  border: 1px solid #d1d5db;
   border-radius: 4px;
   outline: none;
-  background-color: #fff;
   font-size: 14px;
   line-height: 1.5;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+input[type="text"] {
+  padding: 2px 6px;
+  background-color: #fff;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  transition: border-color 0.2s;
 }
 
 input[type="text"]:focus {
   border-color: #3b82f6;
 }
 
-/* Edit textarea styling */
+/* Task input specific styles */
+.task-input-field, .task-input-textarea {
+  background-color: #fff;
+  padding: 4px 8px;
+  resize: none;
+  min-height: 24px;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.task-input-field:focus, .task-input-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Search row specific styles */
+.search-row input {
+  background-color: #fff;
+  padding: 4px 8px;
+  border: 1px solid #e5e5e5;
+}
+
+.search-row input:focus {
+  border-color: #3b82f6;
+}
+
+/* Edit mode styles */
 .task-edit-textarea {
   width: 100%;
   padding: 0px 0 4px 0;
@@ -296,14 +297,13 @@ input[type="text"]:focus {
   overflow: hidden;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  min-height: 6em; /* 4 lines (1.5em x 4) */
+  min-height: 6em;
 }
 
-/* Edit inputs should adapt to text content */
 .task-item input[type="text"] {
   min-height: 1.5em;
   height: auto;
-  border: none; /* Edit inputs stay transparent */
+  border: none;
   background-color: transparent;
   padding: 4px 0;
 }
@@ -312,47 +312,7 @@ input[type="text"]:focus {
   border: none;
 }
 
-.task-input input[type="text"] {
-  background-color: #fff;
-  border: 1px solid #d1d5db;
-  padding: 2px 6px; /* Reduced padding */
-  border-radius: 4px;
-  transition: border-color 0.2s;
-  font-size: 14px; /* Same as normal task text on desktop */
-  font-family: inherit;
-  line-height: 1.5;
-}
-
-.task-input input[type="text"]:focus {
-  border-color: #3b82f6;
-  outline: none;
-}
-
-/* Task input field styling (ALL fields are now textareas) */
-.task-input-field,
-.task-input-textarea {
-  width: 100%;
-  background-color: #fff;
-  border: 1px solid #d1d5db;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: border-color 0.2s;
-  font-size: 14px;
-  font-family: inherit;
-  line-height: 1.5;
-  resize: none;
-  min-height: 24px;
-  overflow: hidden;
-  word-wrap: break-word;
-}
-
-.task-input-field:focus,
-.task-input-textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-/* Placeholder styles for all inputs */
+/* Placeholder styles */
 input[type="text"]::placeholder,
 .task-edit-textarea::placeholder,
 .task-input-textarea::placeholder,
@@ -361,265 +321,14 @@ input[type="text"]::placeholder,
   font: inherit;
 }
 
-/* Mobile responsive styles */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 16px; /* More padding-x for header */
-  }
-
-  .header-content {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .header-left {
-    flex-direction: row;
-    gap: 8px;
-    align-items: center;
-    flex: 1;
-  }
-
-  .header-title {
-    font-size: 18px;
-  }
-
-  .header-main-buttons {
-    gap: 4px;
-  }
-
-  .header-right {
-    gap: 8px;
-  }
-
-  .user-name {
-    font-size: 12px;
-  }
-
-  /* Compact button styles for mobile */
-  .btn {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-
-  .btn-add,
-  .btn-save,
-  .btn-cancel,
-  .btn-delete,
-  .btn-done {
-    padding: 2px 4px;
-    font-size: 10px;
-  }
-
-  /* Mobile SVG sizes */
-  .btn svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  /* Compact task layout for mobile */
-  .task-item,
-  .task-input {
-    min-height: 36px;
-  }
-
-  .task-item-date,
-  .task-item-time,
-  .task-item-text,
-  .task-item-actions,
-  .task-input-date,
-  .task-input-time,
-  .task-input-text,
-  .task-input-actions {
-    padding: 4px;
-  }
-
-  /* Optimized column widths for mobile */
-  .task-item-date,
-  .task-input-date {
-    width: 30%; /* More width for date */
-    font-size: 12px;
-    white-space: nowrap;
-    text-align: center; /* Horizontally centered */
-  }
-
-  .task-item-time,
-  .task-input-time {
-    width: 18%;
-    font-size: 12px;
-    white-space: nowrap;
-    text-align: center; /* Horizontally centered */
-  }
-
-  .task-item-text,
-  .task-input-text {
-    flex: 1;
-    font-size: 14px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .task-item-actions,
-  .task-input-actions {
-    width: 10%; /* Narrower - vertical buttons */
-    gap: 2px;
-    flex-direction: column; /* Arrange buttons vertically */
-    justify-content: center;
-    align-items: center;
-  }
-
-  /* Placeholder centered and font: inherit for all inputs */
-  input[type="text"]::placeholder {
-    text-align: center;
-    font: inherit;
-  }
-
-  .task-input input[type="text"]::placeholder {
-    text-align: center;
-    font: inherit;
-  }
-
-  /* Mobile input styles */
-  input[type="text"] {
-    padding: 2px 4px; /* Same as textarea */
-    font-size: 12px;
-  }
-
-  /* Edit inputs stay transparent on mobile */
-  .task-item input[type="text"] {
-    border: none;
-    background-color: transparent;
-    padding: 3px 4px;
-  }
-
-  .task-input input[type="text"] {
-    font-size: 12px;
-    font-family: inherit;
-    line-height: 1.5;
-    padding: 2px 4px;
-    border: 1px solid #d1d5db;
-    background-color: #fff;
-    border-radius: 4px;
-  }
-
-  .task-input input[type="text"]:focus {
-    border-color: #3b82f6;
-    outline: none;
-  }
-
-  /* Mobile task input styles */
-  .task-input-field,
-  .task-input-textarea {
-    font-size: 12px;
-    font-family: inherit;
-    line-height: 1.5;
-    padding: 3px 6px;
-    word-wrap: break-word;
-  }
-
-  .task-input-actions {
-    padding-top: 6px; /* Align button with textarea baseline */
-  }
-
-  /* Login form mobile adjustments */
-  .login-form {
-    padding: 1.5rem;
-    margin: 0 16px;
-  }
-
-  .login-form h1 {
-    font-size: 1.25rem;
-  }
-
-  .form-group input {
-    padding: 0.6rem;
-    font-size: 0.9rem;
-  }
-
-  .login-button {
-    padding: 0.6rem;
-    font-size: 0.9rem;
-  }
+/* Mark (highlight) styles */
+mark {
+  background-color: #fef08a;
+  color: inherit;
+  padding: 0;
 }
 
-/* Extra small mobile devices */
-@media (max-width: 480px) {
-  .container {
-    padding: 0 20px; /* Even more padding-x for small devices */
-  }
-
-  .header-title {
-    font-size: 16px;
-  }
-
-  .header-left {
-    gap: 6px;
-  }
-
-  .header-main-buttons {
-    gap: 3px;
-  }
-
-  .btn {
-    padding: 3px 6px;
-    font-size: 10px;
-  }
-
-  .task-item-date,
-  .task-input-date {
-    width: 28%;
-  }
-
-  .task-item-time,
-  .task-input-time {
-    width: 16%;
-  }
-
-  .task-item-actions,
-  .task-input-actions {
-    width: 8%; /* Even narrower on small devices */
-  }
-
-  .btn-add,
-  .btn-save,
-  .btn-cancel,
-  .btn-delete,
-  .btn-done {
-    padding: 2px 3px;
-    font-size: 9px;
-  }
-
-  /* Extra small mobile SVG sizes */
-  .btn svg {
-    width: 10px;
-    height: 10px;
-  }
-
-  input[type="text"] {
-    font-size: 11px;
-  }
-}
-
-/* Print styles */
-@media print {
-  .btn {
-    display: none;
-  }
-  
-  .task-item-actions {
-    display: none;
-  }
-  
-  .task-input {
-    display: none;
-  }
-  
-  body {
-    padding: 0;
-  }
-}
-
+/* Login styles */
 .login-container {
   display: flex;
   justify-content: center;
@@ -734,48 +443,224 @@ input[type="text"]::placeholder,
   text-decoration: underline;
 }
 
-.btn-history {
-  color: #2563eb;
-  border-color: #93c5fd;
-}
-
-.btn-history:hover {
-  background-color: #eff6ff;
-}
-
-/* Search row styles */
-.search-row {
-  background-color: #f3f4f6;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.search-row input {
-  background-color: #fff;
-  width: 100%;
-  padding: 4px 8px;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  outline: none;
-  font-size: 14px;
-}
-
-.search-row input:focus {
-  border-color: #3b82f6;
-}
-
-/* Mark (highlight) styles */
-mark {
-  background-color: #fef08a;
-  color: inherit;
-  padding: 0;
-}
-
-/* Mobile styles for search */
+/* Mobile responsive styles */
 @media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .header-content {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .header-left {
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+    flex: 1;
+  }
+
+  .header-title {
+    font-size: 18px;
+  }
+
+  .header-main-buttons {
+    gap: 4px;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  .user-name {
+    font-size: 12px;
+  }
+
+  /* Compact button styles for mobile */
+  .btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .btn-add, .btn-save, .btn-cancel, .btn-delete, .btn-done {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+
+  .btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Compact task layout for mobile */
+  .task-item, .task-input, .search-row {
+    min-height: 36px;
+  }
+
+  .task-item-date, .task-item-time, .task-item-text, .task-item-actions,
+  .task-input-date, .task-input-time, .task-input-text, .task-input-actions {
+    padding: 4px;
+  }
+
+  /* Optimized column widths for mobile */
+  .task-item-date, .task-input-date {
+    width: 30%;
+    font-size: 12px;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .task-item-time, .task-input-time {
+    width: 18%;
+    font-size: 12px;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .task-item-text, .task-input-text {
+    flex: 1;
+    font-size: 14px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .task-item-actions, .task-input-actions {
+    width: 10%;
+    gap: 2px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .task-input-actions {
+    padding-top: 6px;
+  }
+
+  /* Mobile input styles */
+  input[type="text"] {
+    padding: 2px 4px;
+    font-size: 12px;
+  }
+
+  .task-item input[type="text"] {
+    border: none;
+    background-color: transparent;
+    padding: 3px 4px;
+  }
+
+  .task-input input[type="text"] {
+    font-size: 12px;
+    font-family: inherit;
+    line-height: 1.5;
+    padding: 2px 4px;
+    border: 1px solid #d1d5db;
+    background-color: #fff;
+    border-radius: 4px;
+  }
+
+  .task-input input[type="text"]:focus {
+    border-color: #3b82f6;
+    outline: none;
+  }
+
+  .task-input-field, .task-input-textarea {
+    font-size: 12px;
+    font-family: inherit;
+    line-height: 1.5;
+    padding: 3px 6px;
+    word-wrap: break-word;
+  }
+
   .search-row input {
     font-size: 12px;
     padding: 3px 6px;
+  }
+
+  /* Login form mobile adjustments */
+  .login-form {
+    padding: 1.5rem;
+    margin: 0 16px;
+  }
+
+  .login-form h1 {
+    font-size: 1.25rem;
+  }
+
+  .form-group input {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .login-button {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 20px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .header-left {
+    gap: 6px;
+  }
+
+  .header-main-buttons {
+    gap: 3px;
+  }
+
+  .btn {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .task-item-date, .task-input-date {
+    width: 28%;
+  }
+
+  .task-item-time, .task-input-time {
+    width: 16%;
+  }
+
+  .task-item-actions, .task-input-actions {
+    width: 8%;
+  }
+
+  .btn-add, .btn-save, .btn-cancel, .btn-delete, .btn-done {
+    padding: 2px 3px;
+    font-size: 9px;
+  }
+
+  .btn svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  input[type="text"] {
+    font-size: 11px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn, .task-item-actions, .task-input, .search-row {
+    display: none !important;
+  }
+  
+  body {
+    padding: 0;
+  }
+  
+  .task-item {
+    break-inside: avoid;
   }
 }
