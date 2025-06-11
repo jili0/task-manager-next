@@ -30,10 +30,13 @@ const TaskList = ({
     setEditingTaskId(null);
   };
 
+  // Filter out completed tasks
+  const activeTasks = tasks.filter(task => !task.isDone);
+
   return (
     <div className="task-list">
       <TaskInput onAddTask={onAddTask} />
-      {tasks.map((task, index) => (
+      {activeTasks.map((task, index) => (
         <TaskItem
           key={task._id}
           task={task}
@@ -41,7 +44,6 @@ const TaskList = ({
           isEditing={task._id === editingTaskId}
           onEdit={() => handleEditTask(task._id as string)}
           onSave={handleSaveTask}
-          onDelete={() => onDeleteTask(task._id as string)}
           onToggleDone={() => onToggleTaskDone(task._id as string)}
         />
       ))}

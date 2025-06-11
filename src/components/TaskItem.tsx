@@ -9,7 +9,6 @@ interface TaskItemProps {
   isEditing: boolean;
   onEdit: () => void;
   onSave: (task: ITask) => void;
-  onDelete: () => void;
   onToggleDone: () => void;
 }
 
@@ -19,7 +18,6 @@ const TaskItem = ({
   isEditing, 
   onEdit, 
   onSave, 
-  onDelete, 
   onToggleDone 
 }: TaskItemProps) => {
   const [editedTask, setEditedTask] = useState<ITask>({
@@ -241,7 +239,7 @@ const TaskItem = ({
 
   return (
     <div 
-      className={`task-item ${task.isDone ? 'done' : ''}`}
+      className={`task-item`}
       onClick={onEdit}
     >
       <div className="task-item-date">
@@ -264,18 +262,8 @@ const TaskItem = ({
             e.stopPropagation();
             onToggleDone();
           }}
-          className={`btn btn-done ${task.isDone ? 'text-green-600' : ''}`}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20,6 9,17 4,12"></polyline>
-          </svg>
-        </button>
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="btn btn-delete"
+          className="btn btn-done"
+          title="Mark as done"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3,6 5,6 21,6"></polyline>
