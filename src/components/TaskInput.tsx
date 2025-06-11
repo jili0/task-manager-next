@@ -142,10 +142,16 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
         return;
       }
       
-      // For text area, allow Enter for new lines, but Ctrl+Enter adds task
-      if (e.currentTarget.name === 'text' && e.ctrlKey) {
-        e.preventDefault();
-        handleAddTask();
+      // For text area: Cmd+Enter for new lines, Enter adds task
+      if (e.currentTarget.name === 'text') {
+        if (e.metaKey) {
+          // Cmd+Enter: Allow new line (default behavior)
+          return;
+        } else {
+          // Enter: Add task
+          e.preventDefault();
+          handleAddTask();
+        }
       }
     }
   };
