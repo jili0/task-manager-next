@@ -1,15 +1,17 @@
 // src/components/Header.tsx
 import React from 'react';
 import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   title: string;
-  onClear: () => void;
   onPrint: () => void;
   userName?: string;
 }
 
-const Header = ({ title, onClear, onPrint, userName }: HeaderProps) => {
+const Header = ({ title, onPrint, userName }: HeaderProps) => {
+  const router = useRouter();
+
   return (
     <header className="header">
       <div className="container header-content">
@@ -23,10 +25,10 @@ const Header = ({ title, onClear, onPrint, userName }: HeaderProps) => {
               Print
             </button>
             <button 
-              onClick={onClear}
-              className="btn btn-clear"
+              onClick={() => router.push('/history')}
+              className="btn btn-history"
             >
-              Delete
+              History
             </button>
           </div>
         </div>
