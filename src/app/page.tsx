@@ -19,9 +19,8 @@ const Home = () => {
 
   // Redirect to login page if not authenticated
   useEffect(() => {
-    // WICHTIG: Warte bis die Session geladen ist
     if (status === 'loading') {
-      return; // Mache nichts während des Ladens
+      return;
     }
     
     if (status === 'unauthenticated') {
@@ -31,7 +30,6 @@ const Home = () => {
 
   // Load tasks from server when authenticated
   useEffect(() => {
-    // WICHTIG: Nur laden wenn wirklich authentifiziert
     if (status === 'authenticated' && session?.user) {
       const fetchTasks = async () => {
         try {
@@ -161,19 +159,21 @@ const Home = () => {
         console.error('Error toggling task status:', error);
       }
     },
-
   };
 
   const printTasks = () => {
     window.print();
   };
 
-  // WICHTIG: Zeige Loading während Session-Check
+  const headerButtons = [
+    { label: "Print", onClick: printTasks },
+    { label: "History", onClick: () => router.push('/history') }
+  ];
+
   if (status === 'loading') {
     return <div className="loading">Loading...</div>;
   }
 
-  // Wenn nicht authentifiziert, zeige nichts (Redirect läuft bereits)
   if (status === 'unauthenticated') {
     return null;
   }
@@ -186,7 +186,7 @@ const Home = () => {
     <div className="app-container">
       <Header 
         title="Task Manager" 
-        onPrint={printTasks}
+        buttons={headerButtons}
         userName={session?.user?.name || ''}
       />
       {error && (

@@ -1,6 +1,11 @@
 import React from 'react';
 import { ITask } from '@/types';
-import { SearchState } from './SearchRow';
+
+interface SearchState {
+  date: string;
+  time: string;
+  text: string;
+}
 
 interface HistoryTaskItemProps {
   task: ITask;

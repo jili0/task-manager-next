@@ -1,35 +1,35 @@
 // src/components/Header.tsx
 import React from 'react';
 import { signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+
+interface HeaderButton {
+  label: string;
+  onClick: () => void;
+  className?: string;
+}
 
 interface HeaderProps {
   title: string;
-  onPrint: () => void;
+  buttons: HeaderButton[];
   userName?: string;
 }
 
-const Header = ({ title, onPrint, userName }: HeaderProps) => {
-  const router = useRouter();
-
+const Header = ({ title, buttons, userName }: HeaderProps) => {
   return (
     <header className="header">
       <div className="container header-content">
         <div className="header-left">
           <h1 className="header-title">{title}</h1>
           <div className="header-main-buttons">
-            <button 
-              onClick={onPrint}
-              className="btn btn-primary"
-            >
-              Print
-            </button>
-            <button 
-              onClick={() => router.push('/history')}
-              className="btn btn-primary"
-            >
-              History
-            </button>
+            {buttons.map((button, index) => (
+              <button 
+                key={index}
+                onClick={button.onClick}
+                className={button.className || "btn btn-primary"}
+              >
+                {button.label}
+              </button>
+            ))}
           </div>
         </div>
         <div className="header-right">

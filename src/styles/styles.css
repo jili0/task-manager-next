@@ -96,7 +96,6 @@ body {
 
 .btn-primary:hover {
   background-color: #eff6ff;
-  border-radius: 4px;
 }
 
 .btn-clear {
@@ -108,7 +107,6 @@ body {
   background-color: #fef2f2;
 }
 
-/* Small buttons - shared styles */
 .btn-small {
   padding: 4px 8px;
 }
@@ -119,7 +117,6 @@ body {
 
 .btn-success:hover {
   background-color: #f0fdf4;
-  border-radius: 4px;
 }
 
 .btn-danger {
@@ -128,7 +125,6 @@ body {
 
 .btn-danger:hover {
   background-color: #fef2f2;
-  border-radius: 4px;
 }
 
 /* Task list */
@@ -136,81 +132,49 @@ body {
   width: 100%;
 }
 
-/* Task item and Search row - shared styles */
-.task-item, .search-row, .task-input {
+/* Task input row (for adding tasks and search) */
+.task-input {
   display: flex;
   border-bottom: 1px solid #e5e5e5;
   min-height: 42px;
   align-items: flex-start;
-}
-
-.task-item {
-  cursor: pointer;
-}
-
-.task-item:nth-child(even):not(.search-row) {
-  background-color: #f9fafb;
-}
-
-.task-item.done {
-  background-color: #f9fafb;
-  color: #9ca3af;
-  text-decoration: line-through;
-}
-
-.search-row {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  cursor: default;
-}
-
-.task-input {
   background-color: #fff;
 }
 
-/* Column styles - shared for task items, search row, and task input */
-.task-item-date, .task-item-time, .task-item-text, .task-item-actions,
-.task-input-date, .task-input-time, .task-input-text, .task-input-actions {
-  padding: 8px;
+.task-input-date,
+.task-input-time,
+.task-input-text,
+.task-input-actions {
+  padding: 4px;
   border-right: 1px solid #e5e5e5;
-  min-height: inherit;
   display: flex;
   align-items: flex-start;
 }
 
-.task-item-date, .task-input-date {
+.task-input-date {
   width: 25%;
 }
 
-.task-item-time, .task-input-time {
+.task-input-time {
   width: 16.666%;
 }
 
-.task-item-text, .task-input-text {
+.task-input-text {
   flex: 1;
 }
 
-.task-item-actions, .task-input-actions {
+.task-input-actions {
   width: 16.666%;
   display: flex;
   justify-content: center;
   gap: 8px;
   border-right: none;
-}
-
-/* Task input specific overrides */
-.task-input-date, .task-input-time, .task-input-text {
-  padding: 4px;
-}
-
-.task-input-actions {
-  padding: 4px;
   padding-top: 8px; /* Align button with textarea baseline */
 }
 
-/* Task input specific styles */
-.task-input-field, .task-input-textarea {
+/* Task input field styling */
+.task-input-field,
+.task-input-textarea {
   width: 100%;
   background-color: #fff;
   border: 1px solid #d1d5db;
@@ -226,12 +190,65 @@ body {
   word-wrap: break-word;
 }
 
-.task-input-field:focus, .task-input-textarea:focus {
+.task-input-field:focus,
+.task-input-textarea:focus {
   outline: none;
   border-color: #3b82f6;
 }
 
-/* Edit mode styles */
+.task-input-field::placeholder,
+.task-input-textarea::placeholder {
+  text-align: center;
+  font: inherit;
+}
+
+/* Task items (display rows) */
+.task-item {
+  display: flex;
+  border-bottom: 1px solid #e5e5e5;
+  min-height: 42px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.task-item.done {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.task-item-date,
+.task-item-time,
+.task-item-text,
+.task-item-actions {
+  padding: 8px;
+  border-right: 1px solid #e5e5e5;
+  min-height: inherit;
+  display: flex;
+  align-items: flex-start;
+}
+
+.task-item-date {
+  width: 25%;
+}
+
+.task-item-time {
+  width: 16.666%;
+}
+
+.task-item-text {
+  flex: 1;
+}
+
+.task-item-actions {
+  width: 16.666%;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  border-right: none;
+}
+
+/* Edit mode styles for task items */
 .task-edit-textarea {
   width: 100%;
   padding: 0px 0 4px 0;
@@ -257,14 +274,6 @@ body {
 
 .task-item .task-input-field:focus {
   border: none;
-}
-
-/* Placeholder styles */
-.task-edit-textarea::placeholder,
-.task-input-textarea::placeholder,
-.task-input-field::placeholder {
-  text-align: center;
-  font: inherit;
 }
 
 /* Mark (highlight) styles */
@@ -425,7 +434,6 @@ mark {
     font-size: 12px;
   }
 
-  /* Compact button styles for mobile */
   .btn {
     padding: 4px 8px;
     font-size: 11px;
@@ -441,39 +449,48 @@ mark {
     height: 12px;
   }
 
-  /* Compact task layout for mobile */
-  .task-item, .task-input, .search-row {
+  .task-item,
+  .task-input {
     min-height: 36px;
   }
 
-  .task-item-date, .task-item-time, .task-item-text, .task-item-actions,
-  .task-input-date, .task-input-time, .task-input-text, .task-input-actions {
+  .task-item-date,
+  .task-item-time,
+  .task-item-text,
+  .task-item-actions,
+  .task-input-date,
+  .task-input-time,
+  .task-input-text,
+  .task-input-actions {
     padding: 4px;
   }
 
-  /* Optimized column widths for mobile */
-  .task-item-date, .task-input-date {
+  .task-item-date,
+  .task-input-date {
     width: 30%;
     font-size: 12px;
     white-space: nowrap;
     text-align: center;
   }
 
-  .task-item-time, .task-input-time {
+  .task-item-time,
+  .task-input-time {
     width: 18%;
     font-size: 12px;
     white-space: nowrap;
     text-align: center;
   }
 
-  .task-item-text, .task-input-text {
+  .task-item-text,
+  .task-input-text {
     flex: 1;
     font-size: 14px;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
 
-  .task-item-actions, .task-input-actions {
+  .task-item-actions,
+  .task-input-actions {
     width: 10%;
     gap: 2px;
     flex-direction: column;
@@ -485,22 +502,12 @@ mark {
     padding-top: 6px;
   }
 
-  .task-input-field, .task-input-textarea {
+  .task-input-field,
+  .task-input-textarea {
     font-size: 12px;
-    font-family: inherit;
-    line-height: 1.5;
     padding: 3px 6px;
-    word-wrap: break-word;
   }
 
-  /* Placeholder centered and font: inherit for all inputs */
-  .task-input-field::placeholder,
-  .task-input-textarea::placeholder {
-    text-align: center;
-    font: inherit;
-  }
-
-  /* Login form mobile adjustments */
   .login-form {
     padding: 1.5rem;
     margin: 0 16px;
@@ -544,15 +551,18 @@ mark {
     font-size: 10px;
   }
 
-  .task-item-date, .task-input-date {
+  .task-item-date,
+  .task-input-date {
     width: 28%;
   }
 
-  .task-item-time, .task-input-time {
+  .task-item-time,
+  .task-input-time {
     width: 16%;
   }
 
-  .task-item-actions, .task-input-actions {
+  .task-item-actions,
+  .task-input-actions {
     width: 8%;
   }
 
@@ -569,14 +579,16 @@ mark {
 
 /* Print styles */
 @media print {
-  .btn, .task-item-actions, .task-input, .search-row {
+  .btn,
+  .task-item-actions,
+  .task-input {
     display: none !important;
   }
-  
+
   body {
     padding: 0;
   }
-  
+
   .task-item {
     break-inside: avoid;
   }

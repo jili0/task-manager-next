@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import HistoryHeader from '@/components/HistoryHeader';
+import Header from '@/components/Header';
 import HistoryTaskList from '@/components/HistoryTaskList';
 import { ITask } from '@/types';
 import { sortTasks } from '@/lib/utils';
@@ -114,6 +114,11 @@ const History = () => {
     window.print();
   };
 
+  const headerButtons = [
+    { label: "Back", onClick: () => router.push('/') },
+    { label: "Print", onClick: printTasks }
+  ];
+
   if (status === 'loading') {
     return <div className="loading">Loading...</div>;
   }
@@ -128,9 +133,9 @@ const History = () => {
 
   return (
     <div className="app-container">
-      <HistoryHeader 
+      <Header 
         title="Task History" 
-        onPrint={printTasks}
+        buttons={headerButtons}
         userName={session?.user?.name || ''}
       />
       {error && (

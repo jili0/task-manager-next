@@ -1,7 +1,7 @@
 // src/components/TaskList.tsx
 import React, { useState } from 'react';
 import TaskItem from './TaskItem';
-import TaskInput from './TaskInput';
+import InputRow from './InputRow';
 import { ITask } from '@/types';
 
 interface TaskListProps {
@@ -35,7 +35,10 @@ const TaskList = ({
 
   return (
     <div className="task-list">
-      <TaskInput onAddTask={onAddTask} />
+      <InputRow 
+        mode="add"
+        onAddTask={onAddTask} 
+      />
       {activeTasks.map((task, index) => (
         <TaskItem
           key={task._id}

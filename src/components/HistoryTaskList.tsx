@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import HistoryTaskItem from './HistoryTaskItem';
-import SearchRow, { SearchState } from './SearchRow';
+import InputRow from './InputRow';
 import { ITask } from '@/types';
+
+interface SearchState {
+  date: string;
+  time: string;
+  text: string;
+}
 
 interface HistoryTaskListProps {
   tasks: ITask[];
@@ -38,7 +44,8 @@ const HistoryTaskList = ({
 
   return (
     <div className="task-list">
-      <SearchRow 
+      <InputRow 
+        mode="search"
         searchTerms={searchTerms}
         onSearchChange={handleSearchChange}
       />
