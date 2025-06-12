@@ -20,13 +20,13 @@ const HistoryHeader = ({ title, onPrint, userName }: HistoryHeaderProps) => {
           <div className="header-main-buttons">
             <button 
               onClick={() => router.push('/')}
-              className="btn btn-back"
+              className="btn btn-primary"
             >
               Back
             </button>
             <button 
               onClick={onPrint}
-              className="btn btn-print"
+              className="btn btn-primary"
             >
               Print
             </button>
@@ -37,7 +37,7 @@ const HistoryHeader = ({ title, onPrint, userName }: HistoryHeaderProps) => {
           {userName && (
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="btn btn-logout"
+              className="btn btn-primary"
               title="Sign Out"
             >
               Sign Out

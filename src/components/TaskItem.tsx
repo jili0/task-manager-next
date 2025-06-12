@@ -27,7 +27,7 @@ const TaskItem = ({
     text: task.text || ''
   });
   
-  const timeInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLTextAreaElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ const TaskItem = ({
     }
   }, [editedTask.text]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
     // Special handling for date formatting
@@ -105,7 +105,7 @@ const TaskItem = ({
     }));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       // Special handling for date field - move focus to time field
       if (e.currentTarget.name === 'date') {
@@ -178,25 +178,27 @@ const TaskItem = ({
     return (
       <div className={`task-item ${index % 2 === 0 ? '' : 'even'}`}>
         <div className="task-item-date">
-          <input
-            type="text"
+          <textarea
             name="date"
             value={editedTask.date}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Date"
             autoFocus
+            rows={1}
+            className="task-input-field"
           />
         </div>
         <div className="task-item-time">
-          <input
-            type="text"
+          <textarea
             name="time"
             value={editedTask.time}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Time"
             ref={timeInputRef}
+            rows={1}
+            className="task-input-field"
           />
         </div>
         <div className="task-item-text">
@@ -213,7 +215,7 @@ const TaskItem = ({
         <div className="task-item-actions">
           <button 
             onClick={saveTask}
-            className="btn btn-save"
+            className="btn btn-small btn-success"
             title="Save"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,7 +226,7 @@ const TaskItem = ({
           </button>
           <button 
             onClick={() => onSave(task)}
-            className="btn btn-cancel"
+            className="btn btn-small btn-primary"
             title="Cancel"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -262,7 +264,7 @@ const TaskItem = ({
             e.stopPropagation();
             onToggleDone();
           }}
-          className="btn btn-done"
+          className="btn btn-small btn-danger"
           title="Mark as done"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -20,13 +20,13 @@ const Header = ({ title, onPrint, userName }: HeaderProps) => {
           <div className="header-main-buttons">
             <button 
               onClick={onPrint}
-              className="btn btn-print"
+              className="btn btn-primary"
             >
               Print
             </button>
             <button 
               onClick={() => router.push('/history')}
-              className="btn btn-history"
+              className="btn btn-primary"
             >
               History
             </button>
@@ -37,7 +37,7 @@ const Header = ({ title, onPrint, userName }: HeaderProps) => {
           {userName && (
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="btn btn-logout"
+              className="btn btn-primary"
               title="Sign Out"
             >
               Sign Out

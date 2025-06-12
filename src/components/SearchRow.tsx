@@ -15,27 +15,30 @@ const SearchRow = ({ searchTerms, onSearchChange }: SearchRowProps) => {
   return (
     <div className="task-item search-row">
       <div className="task-item-date">
-        <input
-          type="text"
+        <textarea
           placeholder="Search Date"
           value={searchTerms.date}
           onChange={(e) => onSearchChange('date', e.target.value)}
+          className="task-input-field"
+          rows={1}
         />
       </div>
       <div className="task-item-time">
-        <input
-          type="text"
+        <textarea
           placeholder="Search Time"
           value={searchTerms.time}
           onChange={(e) => onSearchChange('time', e.target.value)}
+          className="task-input-field"
+          rows={1}
         />
       </div>
       <div className="task-item-text">
-        <input
-          type="text"
+        <textarea
           placeholder="Search Task"
           value={searchTerms.text}
           onChange={(e) => onSearchChange('text', e.target.value)}
+          className="task-input-field"
+          rows={1}
         />
       </div>
       <div className="task-item-actions">

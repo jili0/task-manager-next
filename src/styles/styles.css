@@ -89,13 +89,14 @@ body {
 }
 
 /* Button variants */
-.btn-print, .btn-history {
+.btn-primary {
   color: #2563eb;
   border-color: #93c5fd;
 }
 
-.btn-print:hover, .btn-history:hover {
+.btn-primary:hover {
   background-color: #eff6ff;
+  border-radius: 4px;
 }
 
 .btn-clear {
@@ -107,51 +108,25 @@ body {
   background-color: #fef2f2;
 }
 
-.btn-logout {
-  color: #4b5563;
-  border: 1px solid #9ca3af;
-}
-
-.btn-logout:hover {
-  background-color: #f3f4f6;
-}
-
-.btn-add, .btn-save, .btn-cancel, .btn-delete, .btn-done {
+/* Small buttons - shared styles */
+.btn-small {
   padding: 4px 8px;
 }
 
-.btn-add {
-  color: #2563eb;
-}
-
-.btn-add:hover {
-  background-color: #eff6ff;
-  border-radius: 4px;
-}
-
-.btn-save {
+.btn-success {
   color: #16a34a;
 }
 
-.btn-save:hover {
+.btn-success:hover {
   background-color: #f0fdf4;
   border-radius: 4px;
 }
 
-.btn-cancel {
-  color: #6b7280;
-}
-
-.btn-cancel:hover {
-  background-color: #f3f4f6;
-  border-radius: 4px;
-}
-
-.btn-delete {
+.btn-danger {
   color: #dc2626;
 }
 
-.btn-delete:hover {
+.btn-danger:hover {
   background-color: #fef2f2;
   border-radius: 4px;
 }
@@ -184,7 +159,6 @@ body {
 }
 
 .search-row {
-  background-color: #f3f4f6;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -225,6 +199,7 @@ body {
   border-right: none;
 }
 
+/* Task input specific overrides */
 .task-input-date, .task-input-time, .task-input-text {
   padding: 4px;
 }
@@ -234,33 +209,17 @@ body {
   padding-top: 8px; /* Align button with textarea baseline */
 }
 
-/* Input styles - shared base */
-input[type="text"], .task-input-field, .task-input-textarea {
-  width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  outline: none;
-  font-size: 14px;
-  line-height: 1.5;
-  font-family: inherit;
-  transition: border-color 0.2s;
-}
-
-input[type="text"] {
-  padding: 2px 6px;
-  background-color: #fff;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-input[type="text"]:focus {
-  border-color: #3b82f6;
-}
-
 /* Task input specific styles */
 .task-input-field, .task-input-textarea {
+  width: 100%;
   background-color: #fff;
+  border: 1px solid #d1d5db;
   padding: 4px 8px;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
   resize: none;
   min-height: 24px;
   overflow: hidden;
@@ -269,17 +228,6 @@ input[type="text"]:focus {
 
 .task-input-field:focus, .task-input-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-}
-
-/* Search row specific styles */
-.search-row input {
-  background-color: #fff;
-  padding: 4px 8px;
-  border: 1px solid #e5e5e5;
-}
-
-.search-row input:focus {
   border-color: #3b82f6;
 }
 
@@ -298,7 +246,7 @@ input[type="text"]:focus {
   min-height: 6em;
 }
 
-.task-item input[type="text"] {
+.task-item .task-input-field {
   min-height: 1.5em;
   height: auto;
   border: none;
@@ -307,12 +255,11 @@ input[type="text"]:focus {
   font: inherit;
 }
 
-.task-item input[type="text"]:focus {
+.task-item .task-input-field:focus {
   border: none;
 }
 
 /* Placeholder styles */
-input[type="text"]::placeholder,
 .task-edit-textarea::placeholder,
 .task-input-textarea::placeholder,
 .task-input-field::placeholder {
@@ -484,7 +431,7 @@ mark {
     font-size: 11px;
   }
 
-  .btn-add, .btn-save, .btn-cancel, .btn-delete, .btn-done {
+  .btn-small {
     padding: 2px 4px;
     font-size: 10px;
   }
@@ -538,33 +485,6 @@ mark {
     padding-top: 6px;
   }
 
-  /* Mobile input styles */
-  input[type="text"] {
-    padding: 2px 4px;
-    font-size: 12px;
-  }
-
-  .task-item input[type="text"] {
-    border: none;
-    background-color: transparent;
-    padding: 3px 4px;
-  }
-
-  .task-input input[type="text"] {
-    font-size: 12px;
-    font-family: inherit;
-    line-height: 1.5;
-    padding: 2px 4px;
-    border: 1px solid #d1d5db;
-    background-color: #fff;
-    border-radius: 4px;
-  }
-
-  .task-input input[type="text"]:focus {
-    border-color: #3b82f6;
-    outline: none;
-  }
-
   .task-input-field, .task-input-textarea {
     font-size: 12px;
     font-family: inherit;
@@ -573,9 +493,11 @@ mark {
     word-wrap: break-word;
   }
 
-  .search-row input {
-    font-size: 12px;
-    padding: 3px 6px;
+  /* Placeholder centered and font: inherit for all inputs */
+  .task-input-field::placeholder,
+  .task-input-textarea::placeholder {
+    text-align: center;
+    font: inherit;
   }
 
   /* Login form mobile adjustments */
@@ -634,7 +556,7 @@ mark {
     width: 8%;
   }
 
-  .btn-add, .btn-save, .btn-cancel, .btn-delete, .btn-done {
+  .btn-small {
     padding: 2px 3px;
     font-size: 9px;
   }
@@ -642,10 +564,6 @@ mark {
   .btn svg {
     width: 10px;
     height: 10px;
-  }
-
-  input[type="text"] {
-    font-size: 11px;
   }
 }
 

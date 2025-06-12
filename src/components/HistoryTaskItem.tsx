@@ -49,7 +49,7 @@ const HistoryTaskItem = ({
       <div className="task-item-actions">
         <button 
           onClick={onUndo}
-          className="btn btn-undo"
+          className="btn btn-secondary"
           title="Restore task"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +59,7 @@ const HistoryTaskItem = ({
         </button>
         <button 
           onClick={onDelete}
-          className="btn btn-delete"
+          className="btn btn-danger"
           title="Delete permanently"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

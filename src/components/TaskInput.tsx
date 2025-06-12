@@ -1,3 +1,4 @@
+// src/components/TaskInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { TaskFormData } from '@/types';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -14,6 +15,27 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
   });
   const timeTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Helper function to get current date in German format
+  const getCurrentDate = (): string => {
+    const today = new Date();
+    const day = today.getDate().toString().padStart(2, '0');
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const year = today.getFullYear();
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const weekday = days[today.getDay()];
+    
+    return `${weekday}, ${day}.${month}.${year}`;
+  };
+
+  // Helper function to get current time
+  const getCurrentTime = (): string => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
+  };
 
   // Auto-resize textarea function
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
@@ -93,27 +115,6 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
       ...prev,
       [name]: value
     }));
-  };
-
-  // Helper function to get current date in German format
-  const getCurrentDate = (): string => {
-    const today = new Date();
-    const day = today.getDate().toString().padStart(2, '0');
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const year = today.getFullYear();
-    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-    const weekday = days[today.getDay()];
-    
-    return `${weekday}, ${day}.${month}.${year}`;
-  };
-
-  // Helper function to get current time
-  const getCurrentTime = (): string => {
-    const now = new Date();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    
-    return `${hours}:${minutes}`;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -268,7 +269,7 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
       <div className="task-input-actions">
         <button 
           onClick={handleAddTask}
-          className="btn btn-secondary"
+          className="btn btn-small btn-primary"
           title="Add Task"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
