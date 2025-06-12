@@ -6,6 +6,7 @@ interface HistoryTaskItemProps {
   task: ITask;
   index: number;
   onDelete: () => void;
+  onUndo: () => void;
   searchTerms: SearchState;
 }
 
@@ -13,6 +14,7 @@ const HistoryTaskItem = ({
   task, 
   index, 
   onDelete,
+  onUndo,
   searchTerms 
 }: HistoryTaskItemProps) => {
 
@@ -45,6 +47,16 @@ const HistoryTaskItem = ({
         )) : ' '}
       </div>
       <div className="task-item-actions">
+        <button 
+          onClick={onUndo}
+          className="btn btn-undo"
+          title="Restore task"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 4v6h6"></path>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
         <button 
           onClick={onDelete}
           className="btn btn-delete"
