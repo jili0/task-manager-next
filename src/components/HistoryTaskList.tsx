@@ -6,11 +6,13 @@ import { ITask } from '@/types';
 interface HistoryTaskListProps {
   tasks: ITask[];
   onDeleteTask: (taskId: string) => void;
+  onUndoTask: (taskId: string) => void;
 }
 
 const HistoryTaskList = ({ 
   tasks, 
-  onDeleteTask 
+  onDeleteTask,
+  onUndoTask 
 }: HistoryTaskListProps) => {
   const [searchTerms, setSearchTerms] = useState<SearchState>({
     date: '',
@@ -46,6 +48,7 @@ const HistoryTaskList = ({
           task={task}
           index={index}
           onDelete={() => onDeleteTask(task._id as string)}
+          onUndo={() => onUndoTask(task._id as string)}
           searchTerms={searchTerms}
         />
       ))}

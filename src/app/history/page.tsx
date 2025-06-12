@@ -87,6 +87,29 @@ const History = () => {
     }
   };
 
+  // API function for undoing tasks (mark as not done)
+  const undoTask = async (taskId: string) => {
+    try {
+      setError(null);
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+      });
+
+      if (response.ok) {
+        // Remove task from history (it goes back to main list)
+        setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
+      } else if (response.status === 401) {
+        router.push('/login');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to restore task');
+      }
+    } catch (error) {
+      setError('Error connecting to the server');
+      console.error('Error restoring task:', error);
+    }
+  };
+
   const printTasks = () => {
     window.print();
   };
@@ -120,6 +143,7 @@ const History = () => {
         <HistoryTaskList 
           tasks={tasks}
           onDeleteTask={deleteTask}
+          onUndoTask={undoTask}
         />
       </div>
     </div>
