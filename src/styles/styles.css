@@ -98,21 +98,18 @@ body {
   background-color: #eff6ff;
 }
 
-.btn-clear {
-  color: #dc2626;
-  border-color: #fca5a5;
+.btn-secondary {
+  color: #6b7280;
+  border-color: #d1d5db;
 }
 
-.btn-clear:hover {
-  background-color: #fef2f2;
-}
-
-.btn-small {
-  padding: 4px 8px;
+.btn-secondary:hover {
+  background-color: #f9fafb;
 }
 
 .btn-success {
   color: #16a34a;
+  border-color: #86efac;
 }
 
 .btn-success:hover {
@@ -121,10 +118,15 @@ body {
 
 .btn-danger {
   color: #dc2626;
+  border-color: #fca5a5;
 }
 
 .btn-danger:hover {
   background-color: #fef2f2;
+}
+
+.btn-small {
+  padding: 4px 8px;
 }
 
 /* Task list */
@@ -169,7 +171,7 @@ body {
   justify-content: center;
   gap: 8px;
   border-right: none;
-  padding-top: 8px; /* Align button with textarea baseline */
+  padding-top: 8px;
 }
 
 /* Task input field styling */
@@ -202,7 +204,7 @@ body {
   font: inherit;
 }
 
-/* Task items (display rows) */
+/* Task items */
 .task-item {
   display: flex;
   border-bottom: 1px solid #e5e5e5;
@@ -211,10 +213,8 @@ body {
   cursor: pointer;
 }
 
-.task-item.done {
+.task-item.even {
   background-color: #f9fafb;
-  color: #9ca3af;
-  text-decoration: line-through;
 }
 
 .task-item-date,
@@ -248,7 +248,7 @@ body {
   border-right: none;
 }
 
-/* Edit mode styles for task items */
+/* Edit mode styles */
 .task-edit-textarea {
   width: 100%;
   padding: 0px 0 4px 0;
@@ -276,7 +276,7 @@ body {
   border: none;
 }
 
-/* Mark (highlight) styles */
+/* Highlight styles for search */
 mark {
   background-color: #fef08a;
   color: inherit;

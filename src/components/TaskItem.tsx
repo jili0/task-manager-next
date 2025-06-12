@@ -3,22 +3,42 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ITask } from '@/types';
 import { formatDate, formatTime } from '@/lib/utils';
 
+interface SearchState {
+  date: string;
+  time: string;
+  text: string;
+}
+
 interface TaskItemProps {
   task: ITask;
   index: number;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: (task: ITask) => void;
-  onToggleDone: () => void;
+  mode: 'main' | 'history';
+  
+  // Edit functionality (for both modes)
+  isEditing?: boolean;
+  onEdit?: () => void;
+  onSave?: (task: ITask) => void;
+  
+  // Search highlighting (history mode only)
+  searchTerms?: SearchState;
+  
+  // Action buttons (mode-specific)
+  onToggleDone?: () => void;  // main mode
+  onUndo?: () => void;        // history mode
+  onDelete?: () => void;      // history mode
 }
 
 const TaskItem = ({ 
   task, 
   index, 
-  isEditing, 
+  mode,
+  isEditing = false,
   onEdit, 
   onSave, 
-  onToggleDone 
+  searchTerms,
+  onToggleDone,
+  onUndo,
+  onDelete
 }: TaskItemProps) => {
   const [editedTask, setEditedTask] = useState<ITask>({
     ...task,
@@ -47,12 +67,23 @@ const TaskItem = ({
     }
   }, [editedTask.text]);
 
+  // Function to highlight search terms (history mode)
+  const highlightText = (text: string, searchTerm: string) => {
+    if (!searchTerm || !text || mode !== 'history') return text;
+    
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => 
+      regex.test(part) ? <mark key={i}>{part}</mark> : part
+    );
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
     // Special handling for date formatting
     if (name === 'date') {
-      // Handle raw date inputs
       if (value.match(/^\d{1,5}$/)) {
         setEditedTask(prev => ({
           ...prev,
@@ -61,24 +92,19 @@ const TaskItem = ({
         return;
       }
       
-      // Handle complete date (e.g., "040525")
       else if (value.match(/^\d{6}$/)) {
         const formattedDate = formatDate(value);
-        
-        // Save directly with formatted date
-        onSave({
+        onSave?.({
           ...task,
           ...editedTask,
           date: formattedDate
         });
-        
         return;
       }
     }
     
     // Special handling for time formatting
     if (name === 'time') {
-      // Store raw hour value
       if (value.match(/^\d{1,3}$/)) {
         setEditedTask(prev => ({
           ...prev,
@@ -87,10 +113,8 @@ const TaskItem = ({
         return;
       }
       
-      // Handle hours and minutes (e.g., "0800")
       if (value.match(/^\d{4}$/)) {
         const formattedTime = formatTime(value);
-        
         setEditedTask(prev => ({
           ...prev,
           time: formattedTime
@@ -107,73 +131,62 @@ const TaskItem = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
-      // Special handling for date field - move focus to time field
       if (e.currentTarget.name === 'date') {
         e.preventDefault();
         
-        // Format date if it matches patterns
         if (editedTask.date && (editedTask.date.match(/^\d{2}$/) || editedTask.date.match(/^\d{4}$/))) {
           const formattedDate = formatDate(editedTask.date);
-          
-          // Update formatted date in state
           setEditedTask(prev => ({
             ...prev,
             date: formattedDate
           }));
         }
         
-        // Move focus to time field
-        if (timeInputRef.current) {
-          timeInputRef.current.focus();
-        }
+        timeInputRef.current?.focus();
         return;
       }
       
-      // Special handling for time field - move focus to text field
       if (e.currentTarget.name === 'time') {
         e.preventDefault();
         
-        // Format time if it matches 2-digit pattern
         if (editedTask.time && editedTask.time.match(/^\d{2}$/)) {
           const formattedTime = `${editedTask.time}:00`;
-          
-          // Update time in state
           setEditedTask(prev => ({
             ...prev,
             time: formattedTime
           }));
         }
         
-        // Move focus to text field
-        if (textAreaRef.current) {
-          textAreaRef.current.focus();
-        }
+        textAreaRef.current?.focus();
         return;
       }
       
-      // For textarea, Enter creates new line (normal behavior)
       if (e.currentTarget.name === 'text') {
-        // Allow normal Enter for new lines
-        return;
+        return; // Allow normal Enter for new lines
       }
     }
     
-    // Escape key saves the task
     if (e.key === 'Escape') {
       saveTask();
     }
   };
 
   const saveTask = () => {
-    // Only save task if there's any content
     if (editedTask.date || editedTask.time || editedTask.text) {
-      onSave({
+      onSave?.({
         ...task,
         ...editedTask
       });
     }
   };
 
+  const handleItemClick = () => {
+    if (mode === 'main' || mode === 'history') {
+      onEdit?.();
+    }
+  };
+
+  // Render edit mode
   if (isEditing) {
     return (
       <div className={`task-item ${index % 2 === 0 ? '' : 'even'}`}>
@@ -225,7 +238,7 @@ const TaskItem = ({
             </svg>
           </button>
           <button 
-            onClick={() => onSave(task)}
+            onClick={() => onSave?.(task)}
             className="btn btn-small btn-primary"
             title="Cancel"
           >
@@ -239,41 +252,87 @@ const TaskItem = ({
     );
   }
 
+  // Render display mode
   return (
     <div 
-      className={`task-item`}
-      onClick={onEdit}
+      className={`task-item ${index % 2 === 0 ? '' : 'even'}`}
+      onClick={handleItemClick}
     >
       <div className="task-item-date">
-        {task.date || ' '}
+        {mode === 'history' && searchTerms ? 
+          highlightText(task.date || '', searchTerms.date) : 
+          (task.date || ' ')
+        }
       </div>
       <div className="task-item-time">
-        {task.time || ' '}
+        {mode === 'history' && searchTerms ? 
+          highlightText(task.time || '', searchTerms.time) : 
+          (task.time || ' ')
+        }
       </div>
       <div className="task-item-text">
         {task.text ? task.text.split('\n').map((line, i) => (
           <React.Fragment key={i}>
-            {line}
+            {mode === 'history' && searchTerms ? 
+              highlightText(line, searchTerms.text) : 
+              line
+            }
             {i < task.text.split('\n').length - 1 && <br />}
           </React.Fragment>
         )) : ' '}
       </div>
       <div className="task-item-actions">
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleDone();
-          }}
-          className="btn btn-small btn-danger"
-          title="Mark as done"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3,6 5,6 21,6"></polyline>
-            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
-          </svg>
-        </button>
+        {mode === 'main' && onToggleDone && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleDone();
+            }}
+            className="btn btn-small btn-danger"
+            title="Mark as done"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        )}
+        
+        {mode === 'history' && onUndo && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onUndo();
+            }}
+            className="btn btn-small btn-secondary"
+            title="Restore task"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 4v6h6"></path>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+        )}
+        
+        {mode === 'history' && onDelete && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="btn btn-small btn-danger"
+            title="Delete permanently"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
-import HistoryTaskList from '@/components/HistoryTaskList';
+import TaskList from '@/components/TaskList';
 import { ITask } from '@/types';
 import { sortTasks } from '@/lib/utils';
 import '@/styles/styles.css';
@@ -38,9 +38,7 @@ const History = () => {
           
           if (response.ok) {
             const data = await response.json();
-            // Filter only completed tasks
-            const completedTasks = data.filter((task: ITask) => task.isDone);
-            setTasks(sortTasks(completedTasks));
+            setTasks(data);
           } else if (response.status === 401) {
             router.push('/login');
           } else {
@@ -96,8 +94,10 @@ const History = () => {
       });
 
       if (response.ok) {
-        // Remove task from history (it goes back to main list)
-        setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
+        const data = await response.json();
+        setTasks(prevTasks => 
+          prevTasks.map(task => task._id === data._id ? data : task)
+        );
       } else if (response.status === 401) {
         router.push('/login');
       } else {
@@ -107,6 +107,35 @@ const History = () => {
     } catch (error) {
       setError('Error connecting to the server');
       console.error('Error restoring task:', error);
+    }
+  };
+
+  // API function for updating tasks (when edited in history)
+  const updateTask = async (updatedTask: ITask) => {
+    try {
+      setError(null);
+      const response = await fetch(`/api/tasks/${updatedTask._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTask),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(prevTasks => 
+          sortTasks(prevTasks.map(task => task._id === data._id ? data : task))
+        );
+      } else if (response.status === 401) {
+        router.push('/login');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update task');
+      }
+    } catch (error) {
+      setError('Error connecting to the server');
+      console.error('Error updating task:', error);
     }
   };
 
@@ -145,8 +174,10 @@ const History = () => {
         </div>
       )}
       <div className="container">
-        <HistoryTaskList 
+        <TaskList 
           tasks={tasks}
+          mode="history"
+          onUpdateTask={updateTask}
           onDeleteTask={deleteTask}
           onUndoTask={undoTask}
         />

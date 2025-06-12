@@ -198,6 +198,7 @@ const Home = () => {
       <div className="container">
         <TaskList 
           tasks={tasks}
+          mode="main"
           onAddTask={taskApi.addTask}
           onUpdateTask={taskApi.updateTask}
           onDeleteTask={taskApi.deleteTask}
