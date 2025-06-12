@@ -96,14 +96,43 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
     }));
   };
 
+  // Helper function to get current date in German format
+  const getCurrentDate = (): string => {
+    const today = new Date();
+    const day = today.getDate().toString().padStart(2, '0');
+    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const year = today.getFullYear();
+    const days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const weekday = days[today.getDay()];
+    
+    return `${weekday}, ${day}.${month}.${year}`;
+  };
+
+  // Helper function to get current time
+  const getCurrentTime = (): string => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       // Special handling for date field
       if (e.currentTarget.name === 'date') {
         e.preventDefault();
         
+        // If field is empty, auto-fill with current date
+        if (!newTask.date.trim()) {
+          const currentDate = getCurrentDate();
+          setNewTask(prev => ({
+            ...prev,
+            date: currentDate
+          }));
+        }
         // Format date if it matches patterns
-        if (newTask.date && (newTask.date.match(/^\d{2}$/) || newTask.date.match(/^\d{4}$/))) {
+        else if (newTask.date && (newTask.date.match(/^\d{2}$/) || newTask.date.match(/^\d{4}$/))) {
           const formattedDate = formatDate(newTask.date);
           
           // Update formatted date in state
@@ -124,8 +153,16 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
       if (e.currentTarget.name === 'time') {
         e.preventDefault();
         
+        // If field is empty, auto-fill with current time
+        if (!newTask.time.trim()) {
+          const currentTime = getCurrentTime();
+          setNewTask(prev => ({
+            ...prev,
+            time: currentTime
+          }));
+        }
         // Format time if it matches 2-digit pattern
-        if (newTask.time && newTask.time.match(/^\d{2}$/)) {
+        else if (newTask.time && newTask.time.match(/^\d{2}$/)) {
           const formattedTime = `${newTask.time}:00`;
           
           // Update time in state
@@ -145,8 +182,23 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
       // For text area: Cmd+Enter for new lines, Enter adds task
       if (e.currentTarget.name === 'text') {
         if (e.metaKey) {
-          // Cmd+Enter: Allow new line (default behavior)
-          return;
+          // Cmd+Enter: Insert new line manually
+          e.preventDefault();
+          const textarea = e.currentTarget;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const value = textarea.value;
+          const newValue = value.substring(0, start) + '\n' + value.substring(end);
+          
+          setNewTask(prev => ({
+            ...prev,
+            text: newValue
+          }));
+          
+          // Set cursor position after the new line
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = start + 1;
+          }, 0);
         } else {
           // Enter: Add task
           e.preventDefault();
