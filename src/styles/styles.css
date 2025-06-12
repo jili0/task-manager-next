@@ -290,9 +290,7 @@ input[type="text"]:focus {
   border: none;
   outline: none;
   background-color: transparent;
-  font-size: 14px;
-  line-height: 1.5;
-  font-family: inherit;
+  font: inherit;
   resize: none;
   overflow: hidden;
   word-wrap: break-word;
@@ -306,6 +304,7 @@ input[type="text"]:focus {
   border: none;
   background-color: transparent;
   padding: 4px 0;
+  font: inherit;
 }
 
 .task-item input[type="text"]:focus {
