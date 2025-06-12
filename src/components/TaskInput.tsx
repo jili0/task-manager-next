@@ -1,4 +1,3 @@
-// src/components/TaskInput.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { TaskFormData } from '@/types';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -211,7 +210,15 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
   const handleAddTask = () => {
     // Only add task if there's any content
     if (newTask.date || newTask.time || newTask.text) {
-      onAddTask(newTask);
+      // Prepare task data with auto-filled date/time if missing
+      const taskToAdd = {
+        date: newTask.date.trim() || getCurrentDate(),
+        time: newTask.time.trim() || getCurrentTime(),
+        text: newTask.text
+      };
+      
+      onAddTask(taskToAdd);
+      
       // Reset input fields after adding
       setNewTask({
         date: '',
@@ -261,7 +268,7 @@ const TaskInput = ({ onAddTask }: TaskInputProps) => {
       <div className="task-input-actions">
         <button 
           onClick={handleAddTask}
-          className="btn btn-add"
+          className="btn btn-secondary"
           title="Add Task"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
