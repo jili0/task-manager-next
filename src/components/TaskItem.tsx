@@ -229,8 +229,8 @@ const TaskItem = ({
         <div className="task-item-actions">
           <button onClick={saveTask} className="btn  btn-success" title="Save">
             <svg
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -249,8 +249,8 @@ const TaskItem = ({
             title="Cancel"
           >
             <svg
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -305,8 +305,8 @@ const TaskItem = ({
             title="Edit task"
           >
             <svg
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -330,8 +330,8 @@ const TaskItem = ({
             title="Mark as done"
           >
             <svg
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -357,8 +357,8 @@ const TaskItem = ({
             title="Restore task"
           >
             <svg
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -382,8 +382,8 @@ const TaskItem = ({
             title="Delete permanently"
           >
             <svg
-              width="24"
-              height="24"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

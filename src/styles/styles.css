@@ -11,7 +11,7 @@ body {
   color: #333;
   background-color: #fff;
   line-height: 1.5;
-  font-size: clamp(18px, 3vw, 28px);
+  font-size: clamp(14px, 2.5vw, 18px);
 }
 
 input,
@@ -150,6 +150,19 @@ textarea {
 /* Task input row (for adding tasks and search) */
 .task-item-input {
   height: 100px;
+  position: relative;
+}
+
+.task-item-input::before {
+  content: "";
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(21, 99, 135, 0.1);
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .task-item-input .task-datetime-container,
@@ -184,10 +197,6 @@ textarea {
   max-height: 100%;
 }
 
-.task-item-input .task-item-time textarea {
-  margin-top: -8px;
-}
-
 .task-item-input .task-item-time {
   position: relative;
 }
@@ -202,9 +211,15 @@ textarea {
   background-color: gainsboro;
 }
 
-.task-item-input textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
+.task-item-input:focus-within::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background-color: rgba(108, 22, 148, 0.1);
+  pointer-events: none;
 }
 
 .task-item-input textarea::placeholder {
