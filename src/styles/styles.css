@@ -211,15 +211,14 @@ body {
   border-bottom: 1px solid #e5e5e5;
   min-height: 42px;
   align-items: flex-start;
-  cursor: pointer;
+  border-bottom: solid 1px black;
 }
 
 .task-item.even {
   background-color: #f9fafb;
 }
 
-.task-item-date,
-.task-item-time,
+.task-datetime-container,
 .task-item-text,
 .task-item-actions {
   padding: 8px;
@@ -229,12 +228,19 @@ body {
   align-items: flex-start;
 }
 
-.task-item-date {
-  width: 25%;
+.task-datetime-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-item-date,
+.task-item-time {
+  width: 100%;
+  flex: 1;
 }
 
 .task-item-time {
-  width: 16.666%;
+  text-align: end;
 }
 
 .task-item-text {

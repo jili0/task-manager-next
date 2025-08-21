@@ -275,15 +275,17 @@ const TaskItem = ({
   // Render display mode
   return (
     <div className={`task-item ${index % 2 === 0 ? "" : "even"}`}>
-      <div className="task-item-date">
-        {mode === "history" && searchTerms
-          ? highlightText(task.date || "", searchTerms.date)
-          : task.date || " "}
-      </div>
-      <div className="task-item-time">
-        {mode === "history" && searchTerms
-          ? highlightText(task.time || "", searchTerms.time)
-          : task.time || " "}
+      <div className="task-datetime-container">
+        <div className="task-item-date">
+          {mode === "history" && searchTerms
+            ? highlightText(task.date || "", searchTerms.date)
+            : task.date || " "}
+        </div>
+        <div className="task-item-time">
+          {mode === "history" && searchTerms
+            ? highlightText(task.time || "", searchTerms.time)
+            : task.time || " "}
+        </div>
       </div>
       <div className="task-item-text">
         {task.text
