@@ -20,20 +20,18 @@ const Header = ({ title, buttons, userName }: HeaderProps) => {
       <div className="container header-content">
         <div className="header-left">
           <h1 className="header-title">{title}</h1>
-          <div className="header-main-buttons">
-            {buttons.map((button, index) => (
-              <button
-                key={index}
-                onClick={button.onClick}
-                className={button.className || "btn btn-header"}
-              >
-                {button.label}
-              </button>
-            ))}
-          </div>
+          {userName && <span className="user-name">Hello, {userName}</span>}
         </div>
         <div className="header-right">
-          {userName && <span className="user-name">Hello, {userName}</span>}
+          {buttons.map((button, index) => (
+            <button
+              key={index}
+              onClick={button.onClick}
+              className={button.className || "btn btn-header"}
+            >
+              {button.label}
+            </button>
+          ))}
           {userName && (
             <button
               onClick={() => signOut({ callbackUrl: "/login" })}

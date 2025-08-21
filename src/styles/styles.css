@@ -401,16 +401,16 @@ mark {
   }
 
   .header-content {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 8px;
-    align-items: center;
+    align-items: flex-end;
   }
 
   .header-left {
+    width: 100%;
     flex-direction: row;
     gap: 8px;
-    align-items: center;
+    justify-content: space-between;
     flex: 1;
   }
 

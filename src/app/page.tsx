@@ -1,14 +1,14 @@
 // src/app/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
-import TaskList from '@/components/TaskList';
-import { ITask } from '@/types';
-import { sortTasks } from '@/lib/utils';
-import '@/styles/styles.css';
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Header from "@/components/Header";
+import TaskList from "@/components/TaskList";
+import { ITask } from "@/types";
+import { sortTasks } from "@/lib/utils";
+import "@/styles/styles.css";
 
 const Home = () => {
   const { data: session, status } = useSession();
@@ -19,42 +19,42 @@ const Home = () => {
 
   // Redirect to login page if not authenticated
   useEffect(() => {
-    if (status === 'loading') {
+    if (status === "loading") {
       return;
     }
-    
-    if (status === 'unauthenticated') {
-      router.push('/login');
+
+    if (status === "unauthenticated") {
+      router.push("/login");
     }
   }, [status, router]);
 
   // Load tasks from server when authenticated
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
+    if (status === "authenticated" && session?.user) {
       const fetchTasks = async () => {
         try {
           setError(null);
-          const response = await fetch('/api/tasks');
-          
+          const response = await fetch("/api/tasks");
+
           if (response.ok) {
             const data = await response.json();
             setTasks(data);
           } else if (response.status === 401) {
-            router.push('/login');
+            router.push("/login");
           } else {
             const errorData = await response.json();
-            setError(errorData.error || 'Failed to load tasks');
+            setError(errorData.error || "Failed to load tasks");
           }
         } catch (error) {
-          setError('Error connecting to the server');
-          console.error('Error loading tasks:', error);
+          setError("Error connecting to the server");
+          console.error("Error loading tasks:", error);
         } finally {
           setLoading(false);
         }
       };
 
       fetchTasks();
-    } else if (status === 'unauthenticated') {
+    } else if (status === "unauthenticated") {
       setLoading(false);
     }
   }, [status, session, router]);
@@ -64,26 +64,26 @@ const Home = () => {
     addTask: async (newTask: any) => {
       try {
         setError(null);
-        const response = await fetch('/api/tasks', {
-          method: 'POST',
+        const response = await fetch("/api/tasks", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(newTask),
         });
 
         if (response.ok) {
           const data = await response.json();
-          setTasks(prevTasks => sortTasks([...prevTasks, data]));
+          setTasks((prevTasks) => sortTasks([...prevTasks, data]));
         } else if (response.status === 401) {
-          router.push('/login');
+          router.push("/login");
         } else {
           const errorData = await response.json();
-          setError(errorData.error || 'Failed to add task');
+          setError(errorData.error || "Failed to add task");
         }
       } catch (error) {
-        setError('Error connecting to the server');
-        console.error('Error adding task:', error);
+        setError("Error connecting to the server");
+        console.error("Error adding task:", error);
       }
     },
 
@@ -91,27 +91,29 @@ const Home = () => {
       try {
         setError(null);
         const response = await fetch(`/api/tasks/${updatedTask._id}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(updatedTask),
         });
 
         if (response.ok) {
           const data = await response.json();
-          setTasks(prevTasks => 
-            sortTasks(prevTasks.map(task => task._id === data._id ? data : task))
+          setTasks((prevTasks) =>
+            sortTasks(
+              prevTasks.map((task) => (task._id === data._id ? data : task))
+            )
           );
         } else if (response.status === 401) {
-          router.push('/login');
+          router.push("/login");
         } else {
           const errorData = await response.json();
-          setError(errorData.error || 'Failed to update task');
+          setError(errorData.error || "Failed to update task");
         }
       } catch (error) {
-        setError('Error connecting to the server');
-        console.error('Error updating task:', error);
+        setError("Error connecting to the server");
+        console.error("Error updating task:", error);
       }
     },
 
@@ -119,20 +121,22 @@ const Home = () => {
       try {
         setError(null);
         const response = await fetch(`/api/tasks/${taskId}`, {
-          method: 'DELETE',
+          method: "DELETE",
         });
 
         if (response.ok) {
-          setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
+          setTasks((prevTasks) =>
+            prevTasks.filter((task) => task._id !== taskId)
+          );
         } else if (response.status === 401) {
-          router.push('/login');
+          router.push("/login");
         } else {
           const errorData = await response.json();
-          setError(errorData.error || 'Failed to delete task');
+          setError(errorData.error || "Failed to delete task");
         }
       } catch (error) {
-        setError('Error connecting to the server');
-        console.error('Error deleting task:', error);
+        setError("Error connecting to the server");
+        console.error("Error deleting task:", error);
       }
     },
 
@@ -140,23 +144,23 @@ const Home = () => {
       try {
         setError(null);
         const response = await fetch(`/api/tasks/${taskId}`, {
-          method: 'PATCH',
+          method: "PATCH",
         });
 
         if (response.ok) {
           const data = await response.json();
-          setTasks(prevTasks => 
-            prevTasks.map(task => task._id === data._id ? data : task)
+          setTasks((prevTasks) =>
+            prevTasks.map((task) => (task._id === data._id ? data : task))
           );
         } else if (response.status === 401) {
-          router.push('/login');
+          router.push("/login");
         } else {
           const errorData = await response.json();
-          setError(errorData.error || 'Failed to toggle task status');
+          setError(errorData.error || "Failed to toggle task status");
         }
       } catch (error) {
-        setError('Error connecting to the server');
-        console.error('Error toggling task status:', error);
+        setError("Error connecting to the server");
+        console.error("Error toggling task status:", error);
       }
     },
   };
@@ -167,14 +171,14 @@ const Home = () => {
 
   const headerButtons = [
     { label: "Print", onClick: printTasks },
-    { label: "History", onClick: () => router.push('/history') }
+    { label: "History", onClick: () => router.push("/history") },
   ];
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return <div className="loading">Loading...</div>;
   }
 
-  if (status === 'unauthenticated') {
+  if (status === "unauthenticated") {
     return null;
   }
 
@@ -184,10 +188,10 @@ const Home = () => {
 
   return (
     <div className="app-container">
-      <Header 
-        title="Task Manager" 
+      <Header
+        title="Tasks"
         buttons={headerButtons}
-        userName={session?.user?.name || ''}
+        userName={session?.user?.name || ""}
       />
       {error && (
         <div className="error-banner">
@@ -196,7 +200,7 @@ const Home = () => {
         </div>
       )}
       <div className="container">
-        <TaskList 
+        <TaskList
           tasks={tasks}
           mode="main"
           onAddTask={taskApi.addTask}
