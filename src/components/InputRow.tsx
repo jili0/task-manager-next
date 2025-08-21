@@ -217,33 +217,31 @@ const InputRow = ({
   const placeholders = getPlaceholders();
 
   return (
-    <div className="task-input">
-      <div className="task-input-date">
-        <textarea
-          name="date"
-          value={values.date}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          placeholder={placeholders.date}
-          rows={1}
-          className="task-input-field"
-        />
+    <div className="task-item task-item-input">
+      <div className="task-datetime-container">
+        <div className="task-item-date">
+          <textarea
+            name="date"
+            value={values.date}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            placeholder={placeholders.date}
+          />
+        </div>
+        <div className="task-item-time">
+          <textarea
+            name="time"
+            value={values.time}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            placeholder={placeholders.time}
+            ref={timeTextareaRef}
+          />
+        </div>
       </div>
-      <div className="task-input-time">
-        <textarea
-          name="time"
-          value={values.time}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          placeholder={placeholders.time}
-          ref={timeTextareaRef}
-          rows={1}
-          className="task-input-field"
-        />
-      </div>
-      <div className="task-input-text">
+      <div className="task-item-text">
         <textarea
           name="text"
           value={values.text}
@@ -251,11 +249,9 @@ const InputRow = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholders.text}
           ref={textAreaRef}
-          rows={1}
-          className="task-input-textarea"
         />
       </div>
-      <div className="task-input-actions">
+      <div className="task-item-actions">
         {mode === "add" && (
           <button
             onClick={handleAddTask}
@@ -277,7 +273,27 @@ const InputRow = ({
             </svg>
           </button>
         )}
-        {/* Search mode has no action button */}
+        {mode !== "add" && (
+          <button
+            onClick={handleAddTask}
+            className="btn btn-small btn-primary"
+            title="Search"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

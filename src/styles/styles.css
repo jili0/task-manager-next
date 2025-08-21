@@ -11,6 +11,12 @@ body {
   color: #333;
   background-color: #fff;
   line-height: 1.5;
+  font-size: clamp(18px, 3vw, 28px);
+}
+
+input,
+textarea {
+  font: inherit;
 }
 
 .app-container {
@@ -26,7 +32,8 @@ body {
 }
 
 .container {
-  max-width: 960px;
+  width: calc(80vw + 10rem);
+  max-width: min(1400px, 100vw);
   margin: 0 auto;
   padding: 0 16px;
 }
@@ -58,7 +65,7 @@ body {
 }
 
 .header-title {
-  font-size: 24px;
+  font-size: clamp(18px, 3vw, 28px);
   font-weight: bold;
   color: #333;
   margin: 0;
@@ -76,7 +83,6 @@ body {
 /* Buttons - Base styles */
 .btn {
   padding: 4px 16px;
-  font-size: 14px;
   cursor: pointer;
   border-radius: 4px;
   border: 1px solid transparent;
@@ -136,73 +142,67 @@ body {
 }
 
 /* Task input row (for adding tasks and search) */
-.task-input {
-  display: flex;
-  border-bottom: 1px solid #e5e5e5;
-  min-height: 42px;
-  align-items: flex-start;
-  background-color: #fff;
+.task-item-input {
+  height: 100px;
 }
 
-.task-input-date,
-.task-input-time,
-.task-input-text,
-.task-input-actions {
-  padding: 4px;
-  border-right: 1px solid #e5e5e5;
-  display: flex;
-  align-items: flex-start;
+.task-item-input .task-datetime-container,
+.task-item-input .task-item-text {
+  padding: 0;
 }
 
-.task-input-date {
-  width: 25%;
+.task-item-input .task-item-date,
+.task-item-input .task-item-time {
+  height: 50%;
 }
 
-.task-input-time {
-  width: 16.666%;
+.task-item-input .task-item-date textarea,
+.task-item-input .task-item-time textarea {
+  text-align: end;
+  max-height: 100%;
 }
 
-.task-input-text {
-  flex: 1;
-}
-
-.task-input-actions {
-  width: 16.666%;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  border-right: none;
-  padding-top: 8px;
-}
-
-/* Task input field styling */
-.task-input-field,
-.task-input-textarea {
+.task-item-input textarea {
+  color: #3b82f6;
+  display: block;
   width: 100%;
-  background-color: #fff;
-  border: 1px solid #d1d5db;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: border-color 0.2s;
-  font-size: 14px;
-  font-family: inherit;
-  line-height: 1.5;
+  border: none;
+  padding: 8px;
+  height: 100%;
   resize: none;
-  min-height: 24px;
   overflow: hidden;
   word-wrap: break-word;
 }
 
-.task-input-field:focus,
-.task-input-textarea:focus {
+.task-item-input .task-item-text textarea {
+  max-height: 100%;
+}
+
+.task-item-input .task-item-time textarea {
+  margin-top: -8px;
+}
+
+.task-item-input .task-item-time {
+  position: relative;
+}
+
+.task-item-input .task-item-time::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 1px;
+  background-color: gainsboro;
+}
+
+.task-item-input textarea:focus {
   outline: none;
   border-color: #3b82f6;
 }
 
-.task-input-field::placeholder,
-.task-input-textarea::placeholder {
+.task-item-input textarea::placeholder {
   text-align: center;
-  font: inherit;
 }
 
 /* Task items */
@@ -225,21 +225,20 @@ body {
   border-right: 1px solid #e5e5e5;
   min-height: inherit;
   display: flex;
-  align-items: flex-start;
+  height: 100%;
+  align-items: center;
 }
 
 .task-datetime-container {
   display: flex;
   flex-direction: column;
+  width: min(25vw, 250px);
 }
 
 .task-item-date,
 .task-item-time {
   width: 100%;
   flex: 1;
-}
-
-.task-item-time {
   text-align: end;
 }
 
@@ -248,41 +247,10 @@ body {
 }
 
 .task-item-actions {
-  width: 16.666%;
-  display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  border-right: none;
-}
-
-/* Edit mode styles */
-.task-edit-textarea {
-  width: 100%;
-  padding: 0px 0 4px 0;
-  border: none;
-  outline: none;
-  background-color: transparent;
-  font: inherit;
-  resize: none;
-  overflow: hidden;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  min-height: 6em;
-}
-
-.task-item .task-input-field {
-  min-height: 1.5em;
-  height: auto;
-  border: none;
-  background-color: transparent;
-  padding: 4px 0;
-  font: inherit;
-}
-
-.task-item .task-input-field:focus {
-  border: none;
+  width: max(5vw, 50px);
 }
 
 /* Highlight styles for search */
@@ -313,7 +281,7 @@ mark {
 .login-form h1 {
   margin-top: 0;
   margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  font-size: clamp(18px, 3vw, 28px);
   text-align: center;
 }
 
@@ -332,7 +300,6 @@ mark {
   padding: 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
-  font-size: 1rem;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -349,7 +316,6 @@ mark {
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   margin-top: 1rem;
@@ -427,10 +393,6 @@ mark {
     flex: 1;
   }
 
-  .header-title {
-    font-size: 18px;
-  }
-
   .header-main-buttons {
     gap: 4px;
   }
@@ -439,79 +401,17 @@ mark {
     gap: 8px;
   }
 
-  .user-name {
-    font-size: 12px;
-  }
-
   .btn {
     padding: 4px 8px;
-    font-size: 11px;
   }
 
   .btn-small {
     padding: 2px 4px;
-    font-size: 10px;
   }
 
   .btn svg {
     width: 12px;
     height: 12px;
-  }
-
-  .task-item,
-  .task-input {
-    min-height: 36px;
-  }
-
-  .task-item-date,
-  .task-item-time,
-  .task-item-text,
-  .task-item-actions,
-  .task-input-date,
-  .task-input-time,
-  .task-input-text,
-  .task-input-actions {
-    padding: 4px;
-  }
-
-  .task-item-date,
-  .task-input-date {
-    width: 30%;
-    font-size: 12px;
-    white-space: nowrap;
-    text-align: center;
-  }
-
-  .task-item-time,
-  .task-input-time {
-    width: 18%;
-    font-size: 12px;
-    white-space: nowrap;
-    text-align: center;
-  }
-
-  .task-item-text,
-  .task-input-text {
-    flex: 1;
-    font-size: 14px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .task-item-actions,
-  .task-input-actions {
-    width: 10%;
-    gap: 2px;
-  }
-
-  .task-input-actions {
-    padding-top: 6px;
-  }
-
-  .task-input-field,
-  .task-input-textarea {
-    font-size: 12px;
-    padding: 3px 6px;
   }
 
   .login-form {
@@ -520,17 +420,15 @@ mark {
   }
 
   .login-form h1 {
-    font-size: 1.25rem;
+    font-size: clamp(18px, 3vw, 28px);
   }
 
   .form-group input {
     padding: 0.6rem;
-    font-size: 0.9rem;
   }
 
   .login-button {
     padding: 0.6rem;
-    font-size: 0.9rem;
   }
 }
 
@@ -538,10 +436,6 @@ mark {
 @media (max-width: 480px) {
   .container {
     padding: 0 20px;
-  }
-
-  .header-title {
-    font-size: 16px;
   }
 
   .header-left {
@@ -554,27 +448,6 @@ mark {
 
   .btn {
     padding: 3px 6px;
-    font-size: 10px;
-  }
-
-  .task-item-date,
-  .task-input-date {
-    width: 28%;
-  }
-
-  .task-item-time,
-  .task-input-time {
-    width: 16%;
-  }
-
-  .task-item-actions,
-  .task-input-actions {
-    width: 8%;
-  }
-
-  .btn-small {
-    padding: 2px 3px;
-    font-size: 9px;
   }
 
   .btn svg {

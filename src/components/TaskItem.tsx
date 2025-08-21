@@ -191,30 +191,30 @@ const TaskItem = ({
   // Render edit mode
   if (isEditing) {
     return (
-      <div className={`task-item ${index % 2 === 0 ? "" : "even"}`}>
-        <div className="task-item-date">
-          <textarea
-            name="date"
-            value={editedTask.date}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Date"
-            autoFocus
-            rows={1}
-            className="task-input-field"
-          />
-        </div>
-        <div className="task-item-time">
-          <textarea
-            name="time"
-            value={editedTask.time}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Time"
-            ref={timeInputRef}
-            rows={1}
-            className="task-input-field"
-          />
+      <div
+        className={`task-item task-item-input ${index % 2 === 0 ? "" : "even"}`}
+      >
+        <div className="task-datetime-container">
+          <div className="task-item-date">
+            <textarea
+              name="date"
+              value={editedTask.date}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Date"
+              autoFocus
+            />
+          </div>
+          <div className="task-item-time">
+            <textarea
+              name="time"
+              value={editedTask.time}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Time"
+              ref={timeInputRef}
+            />
+          </div>
         </div>
         <div className="task-item-text">
           <textarea
@@ -224,7 +224,6 @@ const TaskItem = ({
             onKeyDown={handleKeyDown}
             placeholder="Task"
             ref={textAreaRef}
-            className="task-edit-textarea"
           />
         </div>
         <div className="task-item-actions">
