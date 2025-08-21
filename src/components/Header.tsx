@@ -1,6 +1,6 @@
 // src/components/Header.tsx
-import React from 'react';
-import { signOut } from 'next-auth/react';
+import React from "react";
+import { signOut } from "next-auth/react";
 
 interface HeaderButton {
   label: string;
@@ -22,10 +22,10 @@ const Header = ({ title, buttons, userName }: HeaderProps) => {
           <h1 className="header-title">{title}</h1>
           <div className="header-main-buttons">
             {buttons.map((button, index) => (
-              <button 
+              <button
                 key={index}
                 onClick={button.onClick}
-                className={button.className || "btn btn-primary"}
+                className={button.className || "btn btn-header"}
               >
                 {button.label}
               </button>
@@ -35,9 +35,9 @@ const Header = ({ title, buttons, userName }: HeaderProps) => {
         <div className="header-right">
           {userName && <span className="user-name">Hello, {userName}</span>}
           {userName && (
-            <button 
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="btn btn-primary"
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="btn btn-header"
               title="Sign Out"
             >
               Sign Out

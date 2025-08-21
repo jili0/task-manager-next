@@ -227,14 +227,10 @@ const TaskItem = ({
           />
         </div>
         <div className="task-item-actions">
-          <button
-            onClick={saveTask}
-            className="btn btn-small btn-success"
-            title="Save"
-          >
+          <button onClick={saveTask} className="btn  btn-success" title="Save">
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -249,12 +245,12 @@ const TaskItem = ({
           </button>
           <button
             onClick={() => onSave?.(task)}
-            className="btn btn-small btn-primary"
+            className="btn btn-primary"
             title="Cancel"
           >
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -305,12 +301,12 @@ const TaskItem = ({
               e.stopPropagation();
               onEdit();
             }}
-            className="btn btn-small btn-primary"
+            className="btn btn-primary"
             title="Edit task"
           >
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -330,12 +326,12 @@ const TaskItem = ({
               e.stopPropagation();
               onToggleDone();
             }}
-            className="btn btn-small btn-danger"
+            className="btn btn-danger"
             title="Mark as done"
           >
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -357,12 +353,12 @@ const TaskItem = ({
               e.stopPropagation();
               onUndo();
             }}
-            className="btn btn-small btn-secondary"
+            className="btn btn-secondary"
             title="Restore task"
           >
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -382,12 +378,12 @@ const TaskItem = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="btn btn-small btn-danger"
+            className="btn btn-danger"
             title="Delete permanently"
           >
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

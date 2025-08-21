@@ -65,7 +65,7 @@ textarea {
 }
 
 .header-title {
-  font-size: clamp(18px, 3vw, 28px);
+  font-size: clamp(24px, 4vw, 48px);
   font-weight: bold;
   color: #333;
   margin: 0;
@@ -82,7 +82,7 @@ textarea {
 
 /* Buttons - Base styles */
 .btn {
-  padding: 4px 16px;
+  padding: 4px;
   cursor: pointer;
   border-radius: 4px;
   border: 1px solid transparent;
@@ -96,6 +96,16 @@ textarea {
 }
 
 /* Button variants */
+.btn-header {
+  color: #2563eb;
+  font: inherit;
+}
+
+.btn-header:hover {
+  color: #fff;
+  background-color: #2563eb;
+}
+
 .btn-primary {
   color: #2563eb;
   border-color: #93c5fd;
@@ -130,10 +140,6 @@ textarea {
 
 .btn-danger:hover {
   background-color: #fef2f2;
-}
-
-.btn-small {
-  padding: 4px 8px;
 }
 
 /* Task list */
@@ -403,10 +409,6 @@ mark {
 
   .btn {
     padding: 4px 8px;
-  }
-
-  .btn-small {
-    padding: 2px 4px;
   }
 
   .btn svg {

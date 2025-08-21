@@ -255,12 +255,12 @@ const InputRow = ({
         {mode === "add" && (
           <button
             onClick={handleAddTask}
-            className="btn btn-small btn-primary"
+            className="btn btn-primary"
             title="Add Task"
           >
             <svg
-              width="16"
-              height="16"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -276,12 +276,12 @@ const InputRow = ({
         {mode !== "add" && (
           <button
             onClick={handleAddTask}
-            className="btn btn-small btn-primary"
+            className="btn btn-primary"
             title="Search"
           >
             <svg
-              width="14"
-              height="14"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
