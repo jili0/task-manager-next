@@ -116,9 +116,19 @@ const InputRow = ({
     }
   };
 
+  const updateTimeFormat = () => {
+    if (newTask.time && newTask.time.match(/^\d{2}$/)) {
+      setNewTask((prev) => ({ ...prev, time: `${newTask.time}:00` }));
+    }
+  };
+
   const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-    if (mode === "add" && e.target.name === "date") {
-      updateDateFormat();
+    if (mode === "add") {
+      if (e.target.name === "date") {
+        updateDateFormat();
+      } else if (e.target.name === "time") {
+        updateTimeFormat();
+      }
     }
   };
 
@@ -141,8 +151,8 @@ const InputRow = ({
         e.preventDefault();
         if (!newTask.time.trim()) {
           setNewTask((prev) => ({ ...prev, time: getCurrentTime() }));
-        } else if (newTask.time && newTask.time.match(/^\d{2}$/)) {
-          setNewTask((prev) => ({ ...prev, time: `${newTask.time}:00` }));
+        } else {
+          updateTimeFormat();
         }
         textAreaRef.current?.focus();
         return;
@@ -226,6 +236,7 @@ const InputRow = ({
           value={values.time}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           placeholder={placeholders.time}
           ref={timeTextareaRef}
           rows={1}
