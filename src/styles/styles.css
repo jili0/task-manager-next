@@ -237,11 +237,9 @@ body {
   width: 16.666%;
 }
 
-/* .task-item-text a {
+.task-item-text {
   flex: 1;
-  pointer-events: none;
-  text-decoration: none;
-} */
+}
 
 .task-item-actions {
   width: 16.666%;
