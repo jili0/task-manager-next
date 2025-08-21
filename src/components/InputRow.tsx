@@ -81,8 +81,8 @@ const InputRow = ({
           return;
         } else if (value.match(/^\d{6}$/)) {
           const formattedDate = formatDate(value);
-          onAddTask?.({ ...newTask, date: formattedDate });
-          setNewTask({ date: "", time: "", text: "" });
+          setNewTask((prev) => ({ ...prev, date: formattedDate }));
+          timeTextareaRef.current?.focus();
           return;
         }
       }
