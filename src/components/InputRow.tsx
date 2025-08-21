@@ -106,6 +106,22 @@ const InputRow = ({
     }
   };
 
+  const updateDateFormat = () => {
+    if (
+      newTask.date &&
+      (newTask.date.match(/^\d{2}$/) || newTask.date.match(/^\d{4}$/))
+    ) {
+      const formattedDate = formatDate(newTask.date);
+      setNewTask((prev) => ({ ...prev, date: formattedDate }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    if (mode === "add" && e.target.name === "date") {
+      updateDateFormat();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (mode !== "add") return;
 
@@ -114,12 +130,8 @@ const InputRow = ({
         e.preventDefault();
         if (!newTask.date.trim()) {
           setNewTask((prev) => ({ ...prev, date: getCurrentDate() }));
-        } else if (
-          newTask.date &&
-          (newTask.date.match(/^\d{2}$/) || newTask.date.match(/^\d{4}$/))
-        ) {
-          const formattedDate = formatDate(newTask.date);
-          setNewTask((prev) => ({ ...prev, date: formattedDate }));
+        } else {
+          updateDateFormat();
         }
         timeTextareaRef.current?.focus();
         return;
@@ -202,6 +214,7 @@ const InputRow = ({
           value={values.date}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           placeholder={placeholders.date}
           rows={1}
           className="task-input-field"
