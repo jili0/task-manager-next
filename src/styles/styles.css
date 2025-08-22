@@ -12,6 +12,7 @@ body {
   background-color: #fff;
   line-height: 1.5;
   font-size: clamp(14px, 2.5vw, 18px);
+  padding-bottom: 20rem;
 }
 
 input,

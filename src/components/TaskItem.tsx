@@ -1,7 +1,8 @@
 // src/components/TaskItem.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { ITask } from "@/types";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatTimeDisplay } from "@/lib/utils";
+import InputRow from "./InputRow";
 
 interface SearchState {
   date: string;
@@ -18,6 +19,7 @@ interface TaskItemProps {
   isEditing?: boolean;
   onEdit?: () => void;
   onSave?: (task: ITask) => void;
+  onCancelEdit?: () => void;
 
   // Search highlighting (history mode only)
   searchTerms?: SearchState;
@@ -35,39 +37,12 @@ const TaskItem = ({
   isEditing = false,
   onEdit,
   onSave,
+  onCancelEdit,
   searchTerms,
   onToggleDone,
   onUndo,
   onDelete,
 }: TaskItemProps) => {
-  const [editedTask, setEditedTask] = useState<ITask>({
-    ...task,
-    date: task.date || "",
-    time: task.time || "",
-    text: task.text || "",
-  });
-
-  const timeInputRef = useRef<HTMLTextAreaElement>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    setEditedTask({
-      ...task,
-      date: task.date || "",
-      time: task.time || "",
-      text: task.text || "",
-    });
-  }, [task]);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textAreaRef.current) {
-      textAreaRef.current.style.height = "auto";
-      textAreaRef.current.style.height =
-        textAreaRef.current.scrollHeight + "px";
-    }
-  }, [editedTask.text]);
-
   // Function to highlight search terms (history mode)
   const highlightText = (text: string, searchTerm: string) => {
     if (!searchTerm || !text || mode !== "history") return text;
@@ -80,190 +55,15 @@ const TaskItem = ({
     );
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-
-    // Special handling for date formatting
-    if (name === "date") {
-      if (value.match(/^\d{1,5}$/)) {
-        setEditedTask((prev) => ({
-          ...prev,
-          date: value,
-        }));
-        return;
-      } else if (value.match(/^\d{6}$/)) {
-        const formattedDate = formatDate(value);
-        onSave?.({
-          ...task,
-          ...editedTask,
-          date: formattedDate,
-        });
-        return;
-      }
-    }
-
-    // Special handling for time formatting
-    if (name === "time") {
-      if (value.match(/^\d{1,3}$/)) {
-        setEditedTask((prev) => ({
-          ...prev,
-          time: value,
-        }));
-        return;
-      }
-
-      if (value.match(/^\d{4}$/)) {
-        const formattedTime = formatTime(value);
-        setEditedTask((prev) => ({
-          ...prev,
-          time: formattedTime,
-        }));
-        return;
-      }
-    }
-
-    setEditedTask((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
-      if (e.currentTarget.name === "date") {
-        e.preventDefault();
-
-        if (
-          editedTask.date &&
-          (editedTask.date.match(/^\d{2}$/) || editedTask.date.match(/^\d{4}$/))
-        ) {
-          const formattedDate = formatDate(editedTask.date);
-          setEditedTask((prev) => ({
-            ...prev,
-            date: formattedDate,
-          }));
-        }
-
-        timeInputRef.current?.focus();
-        return;
-      }
-
-      if (e.currentTarget.name === "time") {
-        e.preventDefault();
-
-        if (editedTask.time && editedTask.time.match(/^\d{2}$/)) {
-          const formattedTime = `${editedTask.time}:00`;
-          setEditedTask((prev) => ({
-            ...prev,
-            time: formattedTime,
-          }));
-        }
-
-        textAreaRef.current?.focus();
-        return;
-      }
-
-      if (e.currentTarget.name === "text") {
-        return; // Allow normal Enter for new lines
-      }
-    }
-
-    if (e.key === "Escape") {
-      saveTask();
-    }
-  };
-
-  const saveTask = () => {
-    if (editedTask.date || editedTask.time || editedTask.text) {
-      onSave?.({
-        ...task,
-        ...editedTask,
-      });
-    }
-  };
-
-  const handleItemClick = () => {
-    if (mode === "main" || mode === "history") {
-      onEdit?.();
-    }
-  };
-
-  // Render edit mode
+  // Render edit mode using InputRow
   if (isEditing) {
     return (
-      <div
-        className={`task-item task-item-input ${index % 2 === 0 ? "" : "even"}`}
-      >
-        <div className="task-datetime-container">
-          <div className="task-item-date">
-            <textarea
-              name="date"
-              value={editedTask.date}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Date"
-              autoFocus
-            />
-          </div>
-          <div className="task-item-time">
-            <textarea
-              name="time"
-              value={editedTask.time}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Time"
-              ref={timeInputRef}
-            />
-          </div>
-        </div>
-        <div className="task-item-text">
-          <textarea
-            name="text"
-            value={editedTask.text}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Task"
-            ref={textAreaRef}
-          />
-        </div>
-        <div className="task-item-actions">
-          <button onClick={saveTask} className="btn  btn-success" title="Save">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
-              <polyline points="17,21 17,13 7,13 7,21"></polyline>
-              <polyline points="7,3 7,8 15,8"></polyline>
-            </svg>
-          </button>
-          <button
-            onClick={() => onSave?.(task)}
-            className="btn btn-primary"
-            title="Cancel"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M1 4v6h6"></path>
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
+      <InputRow
+        mode="edit"
+        editTask={task}
+        onSaveEdit={onSave}
+        onCancelEdit={onCancelEdit}
+      />
     );
   }
 
@@ -278,8 +78,11 @@ const TaskItem = ({
         </div>
         <div className="task-item-time">
           {mode === "history" && searchTerms
-            ? highlightText(task.time || "", searchTerms.time)
-            : task.time || " "}
+            ? highlightText(
+                formatTimeDisplay(task.time || "", task.date),
+                searchTerms.time
+              )
+            : formatTimeDisplay(task.time || "", task.date) || " "}
         </div>
       </div>
       <div className="task-item-text">

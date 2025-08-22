@@ -1,8 +1,8 @@
 // src/components/TaskList.tsx
-import React, { useState } from 'react';
-import TaskItem from './TaskItem';
-import InputRow from './InputRow';
-import { ITask, TaskFormData } from '@/types';
+import React, { useState } from "react";
+import TaskItem from "./TaskItem";
+import InputRow from "./InputRow";
+import { ITask, TaskFormData } from "@/types";
 
 interface SearchState {
   date: string;
@@ -12,32 +12,32 @@ interface SearchState {
 
 interface TaskListProps {
   tasks: ITask[];
-  mode: 'main' | 'history';
-  
+  mode: "main" | "history";
+
   // Main mode props
   onAddTask?: (task: TaskFormData) => void;
   onUpdateTask?: (task: ITask) => void;
   onDeleteTask?: (taskId: string) => void;
   onToggleTaskDone?: (taskId: string) => void;
-  
+
   // History mode props
   onUndoTask?: (taskId: string) => void;
 }
 
-const TaskList = ({ 
-  tasks, 
+const TaskList = ({
+  tasks,
   mode,
-  onAddTask, 
-  onUpdateTask, 
-  onDeleteTask, 
+  onAddTask,
+  onUpdateTask,
+  onDeleteTask,
   onToggleTaskDone,
-  onUndoTask
+  onUndoTask,
 }: TaskListProps) => {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [searchTerms, setSearchTerms] = useState<SearchState>({
-    date: '',
-    time: '',
-    text: ''
+    date: "",
+    time: "",
+    text: "",
   });
 
   const handleEditTask = (taskId: string) => {
@@ -49,10 +49,14 @@ const TaskList = ({
     setEditingTaskId(null);
   };
 
+  const handleCancelEdit = () => {
+    setEditingTaskId(null);
+  };
+
   const handleSearchChange = (field: keyof SearchState, value: string) => {
-    setSearchTerms(prev => ({
+    setSearchTerms((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -60,20 +64,27 @@ const TaskList = ({
   const getFilteredTasks = () => {
     let filteredTasks = tasks;
 
-    if (mode === 'main') {
+    if (mode === "main") {
       // Main mode: show only active (not done) tasks
-      filteredTasks = tasks.filter(task => !task.isDone);
-    } else if (mode === 'history') {
+      filteredTasks = tasks.filter((task) => !task.isDone);
+    } else if (mode === "history") {
       // History mode: show only completed tasks
-      filteredTasks = tasks.filter(task => task.isDone);
-      
+      filteredTasks = tasks.filter((task) => task.isDone);
+
       // Apply search filters in history mode
       if (searchTerms.date || searchTerms.time || searchTerms.text) {
-        filteredTasks = filteredTasks.filter(task => {
+        filteredTasks = filteredTasks.filter((task) => {
           return (
-            (!searchTerms.date || task.date.toLowerCase().includes(searchTerms.date.toLowerCase())) &&
-            (!searchTerms.time || task.time.toLowerCase().includes(searchTerms.time.toLowerCase())) &&
-            (!searchTerms.text || task.text.toLowerCase().includes(searchTerms.text.toLowerCase()))
+            (!searchTerms.date ||
+              task.date
+                .toLowerCase()
+                .includes(searchTerms.date.toLowerCase())) &&
+            (!searchTerms.time ||
+              task.time
+                .toLowerCase()
+                .includes(searchTerms.time.toLowerCase())) &&
+            (!searchTerms.text ||
+              task.text.toLowerCase().includes(searchTerms.text.toLowerCase()))
           );
         });
       }
@@ -86,13 +97,13 @@ const TaskList = ({
 
   return (
     <div className="task-list">
-      <InputRow 
-        mode={mode === 'main' ? 'add' : 'search'}
-        onAddTask={mode === 'main' ? onAddTask : undefined}
-        searchTerms={mode === 'history' ? searchTerms : undefined}
-        onSearchChange={mode === 'history' ? handleSearchChange : undefined}
+      <InputRow
+        mode={mode === "main" ? "add" : "search"}
+        onAddTask={mode === "main" ? onAddTask : undefined}
+        searchTerms={mode === "history" ? searchTerms : undefined}
+        onSearchChange={mode === "history" ? handleSearchChange : undefined}
       />
-      
+
       {filteredTasks.map((task, index) => (
         <TaskItem
           key={task._id}
@@ -102,10 +113,23 @@ const TaskList = ({
           isEditing={task._id === editingTaskId}
           onEdit={() => handleEditTask(task._id as string)}
           onSave={handleSaveTask}
-          searchTerms={mode === 'history' ? searchTerms : undefined}
-          onToggleDone={mode === 'main' ? () => onToggleTaskDone?.(task._id as string) : undefined}
-          onUndo={mode === 'history' ? () => onUndoTask?.(task._id as string) : undefined}
-          onDelete={mode === 'history' ? () => onDeleteTask?.(task._id as string) : undefined}
+          onCancelEdit={handleCancelEdit}
+          searchTerms={mode === "history" ? searchTerms : undefined}
+          onToggleDone={
+            mode === "main"
+              ? () => onToggleTaskDone?.(task._id as string)
+              : undefined
+          }
+          onUndo={
+            mode === "history"
+              ? () => onUndoTask?.(task._id as string)
+              : undefined
+          }
+          onDelete={
+            mode === "history"
+              ? () => onDeleteTask?.(task._id as string)
+              : undefined
+          }
         />
       ))}
     </div>
