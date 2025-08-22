@@ -167,7 +167,7 @@ const History = () => {
   return (
     <div className="app-container">
       <Header
-        title="Task History"
+        title="Tasks "
         buttons={headerButtons}
         userName={session?.user?.name || ""}
       />
