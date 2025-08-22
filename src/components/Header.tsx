@@ -16,10 +16,10 @@ interface HeaderProps {
 
 const Header = ({ title, buttons, userName }: HeaderProps) => {
   return (
-    <header className="header">
+    <header>
       <div className="container header-content">
         <div className="header-left">
-          <h1 className="header-title">{title}</h1>
+          <h1 className="header-title">{title}<span>!</span></h1>
           {userName && <span className="user-name">Hello, {userName}</span>}
         </div>
         <div className="header-right">

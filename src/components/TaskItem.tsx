@@ -273,13 +273,16 @@ const TaskItem = ({
       <div className="task-datetime-container">
         <div className="task-item-date">
           {mode === "history" && searchTerms
-            ? highlightText(task.date || "", searchTerms.date)
-            : task.date || " "}
+            ? highlightText(task.date.slice(4) || "", searchTerms.date)
+            : task.date.slice(4) || " "}
         </div>
         <div className="task-item-time">
           {mode === "history" && searchTerms
-            ? highlightText(task.time || "", searchTerms.time)
-            : task.time || " "}
+            ? highlightText(
+                task.date.slice(0, 4) + task.time || "",
+                searchTerms.time
+              )
+            : task.date.slice(0, 4) + task.time || " "}
         </div>
       </div>
       <div className="task-item-text">
