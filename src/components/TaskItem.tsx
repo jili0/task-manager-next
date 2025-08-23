@@ -29,6 +29,10 @@ interface TaskItemProps {
   onToggleDone?: () => void; // main mode
   onUndo?: () => void; // history mode
   onDelete?: () => void; // history mode
+
+  // Draft mode props
+  draftMode?: "add" | "edit";
+  draftTaskId?: string;
 }
 
 const TaskItem = ({
@@ -41,6 +45,8 @@ const TaskItem = ({
   onSave,
   onCancelEdit,
   searchTerms,
+  draftMode,
+  draftTaskId,
   onToggleDone,
   onUndo,
   onDelete,
@@ -65,6 +71,8 @@ const TaskItem = ({
         editTask={task}
         onSaveEdit={onSave}
         onCancelEdit={onCancelEdit}
+        draftMode={draftMode}
+        draftTaskId={draftTaskId}
       />
     );
   }

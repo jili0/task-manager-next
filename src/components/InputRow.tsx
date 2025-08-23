@@ -1,7 +1,7 @@
 // src/components/InputRow.tsx
 import React, { useState, useRef, useEffect } from "react";
-import { TaskFormData, ITask } from "@/types";
-import { formatDate, formatTime } from "@/lib/utils";
+import { TaskFormData, ITask, IDraft } from "@/types";
+import { formatDate, formatTime, debounce } from "@/lib/utils";
 
 interface SearchState {
   date: string;
@@ -23,6 +23,10 @@ interface InputRowProps {
   editTask?: ITask;
   onSaveEdit?: (task: ITask) => void;
   onCancelEdit?: () => void;
+
+  // Draft mode props
+  draftMode?: "add" | "edit";
+  draftTaskId?: string;
 }
 
 const InputRow = ({
@@ -33,6 +37,8 @@ const InputRow = ({
   editTask,
   onSaveEdit,
   onCancelEdit,
+  draftMode,
+  draftTaskId,
 }: InputRowProps) => {
   // Add mode state
   const [newTask, setNewTask] = useState<TaskFormData>({
@@ -50,6 +56,21 @@ const InputRow = ({
     isDone: false,
   });
 
+  const [isDraftLoaded, setIsDraftLoaded] = useState<boolean>(false);
+
+  // Debounced auto-save function
+  const debouncedSaveDraft = debounce(async (draftData: any) => {
+    try {
+      await fetch("/api/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draftData),
+      });
+    } catch (error) {
+      console.error("Error saving draft:", error);
+    }
+  }, 500);
+
   const timeTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -64,6 +85,78 @@ const InputRow = ({
       });
     }
   }, [mode, editTask]);
+
+  // Load draft on mount
+  useEffect(() => {
+    if ((mode === "add" || mode === "edit") && !isDraftLoaded) {
+      loadDraft();
+    }
+  }, [mode, draftMode, draftTaskId, isDraftLoaded]);
+
+  const loadDraft = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.set("mode", draftMode || mode);
+      if (draftMode === "edit" && draftTaskId) {
+        params.set("taskId", draftTaskId);
+      }
+
+      const response = await fetch(`/api/drafts?${params}`);
+      if (response.ok) {
+        const draft = await response.json();
+        if (draft) {
+          if (mode === "add") {
+            setNewTask({
+              date: draft.date,
+              time: draft.time,
+              text: draft.text,
+            });
+          } else if (mode === "edit") {
+            setEditedTask((prev) => ({
+              ...prev,
+              date: draft.date,
+              time: draft.time,
+              text: draft.text,
+            }));
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading draft:", error);
+    } finally {
+      setIsDraftLoaded(true);
+    }
+  };
+
+  // Auto-save draft when values change
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+
+    if (mode === "add") {
+      const draftData = {
+        mode: "add",
+        date: newTask.date,
+        time: newTask.time,
+        text: newTask.text,
+      };
+      debouncedSaveDraft(draftData);
+    }
+  }, [newTask, isDraftLoaded, mode, debouncedSaveDraft]);
+
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+
+    if (mode === "edit" && draftTaskId) {
+      const draftData = {
+        mode: "edit",
+        taskId: draftTaskId,
+        date: editedTask.date,
+        time: editedTask.time,
+        text: editedTask.text,
+      };
+      debouncedSaveDraft(draftData);
+    }
+  }, [editedTask, isDraftLoaded, mode, draftTaskId, debouncedSaveDraft]);
 
   // Helper functions for add mode
   const getCurrentDate = (): string => {
@@ -276,6 +369,22 @@ const InputRow = ({
     }
   };
 
+  const deleteDraft = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.set("mode", draftMode || mode);
+      if (draftMode === "edit" && draftTaskId) {
+        params.set("taskId", draftTaskId);
+      }
+
+      await fetch(`/api/drafts?${params}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error deleting draft:", error);
+    }
+  };
+
   const handleAddTask = () => {
     if (mode !== "add") return;
 
@@ -288,6 +397,7 @@ const InputRow = ({
 
       onAddTask?.(taskToAdd);
       setNewTask({ date: "", time: "", text: "" });
+      deleteDraft(); // Delete draft after successful submission
     }
   };
 
@@ -296,6 +406,7 @@ const InputRow = ({
 
     if (editedTask.date || editedTask.time || editedTask.text) {
       onSaveEdit?.(editedTask);
+      deleteDraft(); // Delete draft after successful submission
     }
   };
 

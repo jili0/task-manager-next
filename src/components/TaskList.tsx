@@ -103,6 +103,7 @@ const TaskList = ({
         onAddTask={mode === "main" ? onAddTask : undefined}
         searchTerms={mode === "history" ? searchTerms : undefined}
         onSearchChange={mode === "history" ? handleSearchChange : undefined}
+        draftMode={mode === "main" ? "add" : undefined}
       />
 
       {filteredTasks.map((task, index) => {
@@ -117,6 +118,8 @@ const TaskList = ({
             onSave={handleSaveTask}
             onCancelEdit={handleCancelEdit}
             searchTerms={mode === "history" ? searchTerms : undefined}
+            draftMode="edit"
+            draftTaskId={task._id as string}
             dividerType={addDivider(
               task,
               index < filteredTasks.length - 1 ? filteredTasks[index + 1] : null
