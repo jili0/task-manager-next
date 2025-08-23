@@ -176,13 +176,13 @@ const InputRow = ({
     return `${hours}:${minutes}`;
   };
 
-  // Auto-resize textarea function
+  // Auto-resize textarea function - only for text field
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + 16 + "px";
   };
 
-  // Adjust height when text changes
+  // Adjust height when text changes - only for text field
   useEffect(() => {
     if (textAreaRef.current) {
       adjustTextareaHeight(textAreaRef.current);
@@ -193,9 +193,6 @@ const InputRow = ({
     const { name, value } = e.target;
 
     if (mode === "add") {
-      // Auto-resize on change
-      adjustTextareaHeight(e.target);
-
       // Special handling for date formatting
       if (name === "date") {
         if (value.match(/^\d{1,5}$/)) {
@@ -221,11 +218,13 @@ const InputRow = ({
         }
       }
 
+      // Auto-resize for text field only
+      if (name === "text") {
+        adjustTextareaHeight(e.target);
+      }
+
       setNewTask((prev) => ({ ...prev, [name]: value }));
     } else if (mode === "edit") {
-      // Auto-resize on change for edit mode
-      adjustTextareaHeight(e.target);
-
       // Special handling for date formatting in edit mode
       if (name === "date") {
         if (value.match(/^\d{1,5}$/)) {
@@ -249,6 +248,11 @@ const InputRow = ({
           setEditedTask((prev) => ({ ...prev, time: formattedTime }));
           return;
         }
+      }
+
+      // Auto-resize for text field only
+      if (name === "text") {
+        adjustTextareaHeight(e.target);
       }
 
       setEditedTask((prev) => ({ ...prev, [name]: value }));
