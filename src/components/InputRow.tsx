@@ -335,7 +335,7 @@ const InputRow = ({
       }
 
       if (e.currentTarget.name === "text") {
-        if (e.metaKey) {
+        if (e.metaKey || e.shiftKey || e.altKey || e.ctrlKey) {
           e.preventDefault();
           const textarea = e.currentTarget;
           const start = textarea.selectionStart;
