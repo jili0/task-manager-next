@@ -63,6 +63,15 @@ const TaskItem = ({
     );
   };
 
+  // Function to copy line text to clipboard
+  const handleLineClick = async (lineText: string) => {
+    try {
+      await navigator.clipboard.writeText(lineText);
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+    }
+  };
+
   // Render edit mode using InputRow
   if (isEditing) {
     return (
@@ -103,10 +112,15 @@ const TaskItem = ({
         {task.text
           ? task.text.split("\n").map((line, i) => (
               <React.Fragment key={i}>
-                {mode === "history" && searchTerms
-                  ? highlightText(line, searchTerms.text)
-                  : line}
-                {i < task.text.split("\n").length - 1 && <br />}
+                <span
+                  onClick={() => handleLineClick(line)}
+                  style={{ cursor: "pointer" }}
+                  title="Click to copy this line"
+                >
+                  {mode === "history" && searchTerms
+                    ? highlightText(line, searchTerms.text)
+                    : line}
+                </span>
               </React.Fragment>
             ))
           : " "}

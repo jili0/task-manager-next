@@ -240,6 +240,15 @@ header {
 
 .task-item-text {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 0 !important;
+}
+
+.task-item-text > span:active {
+  background-color: greenyellow;
 }
 
 .task-item-actions {
