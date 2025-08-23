@@ -20,6 +20,10 @@ textarea {
   font: inherit;
 }
 
+::placeholder {
+  letter-spacing: -1px;
+}
+
 .app-container {
   min-height: 100vh;
   background-color: #fff;
@@ -169,24 +173,7 @@ header {
   padding: 4px 0;
 }
 
-.task-item-input .task-datetime-container textarea::placeholder {
-  text-align: right;
-}
-
-.task-item-input .task-datetime-container .task-item-time {
-  position: relative;
-}
-
-.task-item-input .task-datetime-container .task-item-time::before {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 0;
-  right: 4px;
-  height: 1px;
-  background-color: gainsboro;
-}
-
+.task-item-input .task-datetime-container textarea::placeholder,
 .task-item-input .task-datetime-container .task-item-date textarea,
 .task-item-input .task-datetime-container .task-item-time textarea {
   text-align: end;
@@ -197,10 +184,6 @@ header {
   padding: 4px 0;
   border-radius: 6px;
   white-space: nowrap;
-}
-
-.task-item-input .task-item-text textarea::placeholder {
-  text-align: left;
 }
 
 /* Task items */

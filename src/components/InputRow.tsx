@@ -433,11 +433,11 @@ const InputRow = ({
   // Get placeholders based on mode
   const getPlaceholders = () => {
     if (mode === "add") {
-      return { date: "Add Date", time: "Add Time", text: "Add Task" };
+      return { date: "Date", time: "Time", text: "Write New Task" };
     } else if (mode === "edit") {
       return { date: "Date", time: "Time", text: "Task" };
     } else {
-      return { date: "Search Date", time: "Search Time", text: "Search Task" };
+      return { date: "Date", time: "Time", text: "Search Tasks" };
     }
   };
 
