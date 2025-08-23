@@ -86,7 +86,7 @@ const InputRow = ({
   // Auto-resize textarea function
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+    textarea.style.height = textarea.scrollHeight + 16 + "px";
   };
 
   // Adjust height when text changes
@@ -341,6 +341,7 @@ const InputRow = ({
             onBlur={handleBlur}
             placeholder={placeholders.date}
             autoFocus={mode === "edit"}
+            rows={1}
           />
         </div>
         <div className="task-item-time">
@@ -352,9 +353,11 @@ const InputRow = ({
             onBlur={handleBlur}
             placeholder={placeholders.time}
             ref={timeTextareaRef}
+            rows={1}
           />
         </div>
       </div>
+
       <div className="task-item-text">
         <textarea
           name="text"
@@ -363,8 +366,10 @@ const InputRow = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholders.text}
           ref={textAreaRef}
+          rows={2}
         />
       </div>
+
       <div className="task-item-actions">
         {mode === "add" && (
           <button
