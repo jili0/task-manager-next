@@ -415,3 +415,12 @@ mark {
     padding: 0.6rem;
   }
 }
+
+/* Print styles */
+@media print {
+  .header-right,
+  .user-name,
+  .task-item-input {
+    display: none !important;
+  }
+}

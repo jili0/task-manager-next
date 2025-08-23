@@ -7,7 +7,7 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Task Manager",
+  title: "Tasks",
   description: "A Next.js Task Manager with MongoDB",
   formatDetection: {
     address: false,
