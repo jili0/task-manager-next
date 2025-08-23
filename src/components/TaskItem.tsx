@@ -14,7 +14,7 @@ interface TaskItemProps {
   task: ITask;
   index: number;
   mode: "main" | "history";
-  isLastOfMonth?: boolean;
+  dividerType?: string | null;
 
   // Edit functionality (for both modes)
   isEditing?: boolean;
@@ -35,7 +35,7 @@ const TaskItem = ({
   task,
   index,
   mode,
-  isLastOfMonth = false,
+  dividerType = null,
   isEditing = false,
   onEdit,
   onSave,
@@ -73,8 +73,8 @@ const TaskItem = ({
   return (
     <div
       className={`task-item ${index % 2 === 0 ? "" : "even"} ${
-        isLastOfMonth ? "last-of-month" : ""
-      }`}
+        dividerType === "month" ? "last-of-month" : ""
+      } ${dividerType === "year" ? "last-of-year" : ""}`}
     >
       <div className="task-datetime-container">
         <div className="task-item-date">

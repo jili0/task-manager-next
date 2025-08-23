@@ -170,16 +170,30 @@ export const createApiHandler = (handler: Function) => {
 };
 
 /**
- * Check if this task is the last task of its month
+ * Check if this task needs a divider line and what type
+ * Returns null for no divider, "month" for red month divider, "year" for blue year divider
  */
-export const isLastTaskOfMonth = (
+export const addDivider = (
   currentTask: ITask,
   nextTask: ITask | null
-): boolean => {
-  if (!nextTask || !currentTask.date || !nextTask.date) return false;
+): string | null => {
+  if (!nextTask || !currentTask.date || !nextTask.date) return null;
+
+  const currentYear = currentTask.date.substring(6, 10); // "YYYY"
+  const nextYear = nextTask.date.substring(6, 10); // "YYYY"
+
+  // Check if year changes - year divider has priority
+  if (currentYear !== nextYear) return "year";
 
   const currentMonth = currentTask.date.substring(3, 10); // "MM.YYYY"
   const nextMonth = nextTask.date.substring(3, 10); // "MM.YYYY"
 
-  return currentMonth !== nextMonth;
+  // If same year but different month AND current year - month divider
+  if (
+    currentMonth !== nextMonth &&
+    currentYear == new Date().getFullYear().toString()
+  )
+    return "month";
+
+  return null;
 };

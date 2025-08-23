@@ -250,9 +250,13 @@ header {
   width: auto;
 }
 
-/* Last task of month styling */
+/* month and year dividers */
 .task-item.last-of-month {
   border-bottom: 2px solid #dc2626;
+}
+
+.task-item.last-of-year {
+  border-bottom: 2px solid #2563eb;
 }
 
 /* Highlight styles for search */

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import TaskItem from "./TaskItem";
 import InputRow from "./InputRow";
 import { ITask, TaskFormData } from "@/types";
-import { isLastTaskOfMonth } from "@/lib/utils";
+import { addDivider } from "@/lib/utils";
 
 interface SearchState {
   date: string;
@@ -117,7 +117,7 @@ const TaskList = ({
             onSave={handleSaveTask}
             onCancelEdit={handleCancelEdit}
             searchTerms={mode === "history" ? searchTerms : undefined}
-            isLastOfMonth={isLastTaskOfMonth(
+            dividerType={addDivider(
               task,
               index < filteredTasks.length - 1 ? filteredTasks[index + 1] : null
             )}
