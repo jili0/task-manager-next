@@ -525,6 +525,25 @@ const InputRow = ({
         {mode === "edit" && (
           <>
             <button
+              onClick={handleCancelEdit}
+              className="btn btn-primary"
+              title="Cancel"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M1 4v6h6"></path>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+            </button>
+            <button
               onClick={handleSaveEdit}
               className="btn btn-success"
               title="Save"
@@ -542,25 +561,6 @@ const InputRow = ({
                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
                 <polyline points="17,21 17,13 7,13 7,21"></polyline>
                 <polyline points="7,3 7,8 15,8"></polyline>
-              </svg>
-            </button>
-            <button
-              onClick={handleCancelEdit}
-              className="btn btn-primary"
-              title="Cancel"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M1 4v6h6"></path>
-                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
               </svg>
             </button>
           </>
