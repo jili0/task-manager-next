@@ -250,6 +250,11 @@ header {
   width: auto;
 }
 
+/* Last task of month styling */
+.task-item.last-of-month {
+  border-bottom: 2px solid #dc2626;
+}
+
 /* Highlight styles for search */
 mark {
   background-color: #fef08a;

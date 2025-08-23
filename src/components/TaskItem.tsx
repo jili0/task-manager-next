@@ -14,6 +14,7 @@ interface TaskItemProps {
   task: ITask;
   index: number;
   mode: "main" | "history";
+  isLastOfMonth?: boolean;
 
   // Edit functionality (for both modes)
   isEditing?: boolean;
@@ -34,6 +35,7 @@ const TaskItem = ({
   task,
   index,
   mode,
+  isLastOfMonth = false,
   isEditing = false,
   onEdit,
   onSave,
@@ -69,7 +71,11 @@ const TaskItem = ({
 
   // Render display mode
   return (
-    <div className={`task-item ${index % 2 === 0 ? "" : "even"}`}>
+    <div
+      className={`task-item ${index % 2 === 0 ? "" : "even"} ${
+        isLastOfMonth ? "last-of-month" : ""
+      }`}
+    >
       <div className="task-datetime-container">
         <div className="task-item-date">
           {mode === "history" && searchTerms

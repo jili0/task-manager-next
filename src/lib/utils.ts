@@ -1,5 +1,5 @@
 // src/lib/utils.ts
-
+import { ITask } from "@/types";
 /**
  * Convert date string to sort value
  */
@@ -167,4 +167,19 @@ export const createApiHandler = (handler: Function) => {
       return { error: errorMessage, status: 500 };
     }
   };
+};
+
+/**
+ * Check if this task is the last task of its month
+ */
+export const isLastTaskOfMonth = (
+  currentTask: ITask,
+  nextTask: ITask | null
+): boolean => {
+  if (!nextTask || !currentTask.date || !nextTask.date) return false;
+
+  const currentMonth = currentTask.date.substring(3, 10); // "MM.YYYY"
+  const nextMonth = nextTask.date.substring(3, 10); // "MM.YYYY"
+
+  return currentMonth !== nextMonth;
 };

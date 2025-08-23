@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import TaskItem from "./TaskItem";
 import InputRow from "./InputRow";
 import { ITask, TaskFormData } from "@/types";
+import { isLastTaskOfMonth } from "@/lib/utils";
 
 interface SearchState {
   date: string;
@@ -104,34 +105,40 @@ const TaskList = ({
         onSearchChange={mode === "history" ? handleSearchChange : undefined}
       />
 
-      {filteredTasks.map((task, index) => (
-        <TaskItem
-          key={task._id}
-          task={task}
-          index={index}
-          mode={mode}
-          isEditing={task._id === editingTaskId}
-          onEdit={() => handleEditTask(task._id as string)}
-          onSave={handleSaveTask}
-          onCancelEdit={handleCancelEdit}
-          searchTerms={mode === "history" ? searchTerms : undefined}
-          onToggleDone={
-            mode === "main"
-              ? () => onToggleTaskDone?.(task._id as string)
-              : undefined
-          }
-          onUndo={
-            mode === "history"
-              ? () => onUndoTask?.(task._id as string)
-              : undefined
-          }
-          onDelete={
-            mode === "history"
-              ? () => onDeleteTask?.(task._id as string)
-              : undefined
-          }
-        />
-      ))}
+      {filteredTasks.map((task, index) => {
+        return (
+          <TaskItem
+            key={task._id}
+            task={task}
+            index={index}
+            mode={mode}
+            isEditing={task._id === editingTaskId}
+            onEdit={() => handleEditTask(task._id as string)}
+            onSave={handleSaveTask}
+            onCancelEdit={handleCancelEdit}
+            searchTerms={mode === "history" ? searchTerms : undefined}
+            isLastOfMonth={isLastTaskOfMonth(
+              task,
+              index < filteredTasks.length - 1 ? filteredTasks[index + 1] : null
+            )}
+            onToggleDone={
+              mode === "main"
+                ? () => onToggleTaskDone?.(task._id as string)
+                : undefined
+            }
+            onUndo={
+              mode === "history"
+                ? () => onUndoTask?.(task._id as string)
+                : undefined
+            }
+            onDelete={
+              mode === "history"
+                ? () => onDeleteTask?.(task._id as string)
+                : undefined
+            }
+          />
+        );
+      })}
     </div>
   );
 };
