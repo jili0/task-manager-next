@@ -1,3 +1,6 @@
+/* Verknüpfung zur Hauptstil-Datei */
+@import url('../styles/styles.css');
+
 /* Reset und grundlegende Stile */
 * {
   box-sizing: border-box;
@@ -8,6 +11,3 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
-
-/* Verknüpfung zur Hauptstil-Datei */
-@import url('../styles/styles.css');
