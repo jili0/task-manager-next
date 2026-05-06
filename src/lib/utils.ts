@@ -191,7 +191,7 @@ export const addDivider = (
   // If same year but different month AND current year - month divider
   if (
     currentMonth !== nextMonth &&
-    currentYear == new Date().getFullYear().toString()
+    currentYear === new Date().getFullYear().toString()
   )
     return "month";
 

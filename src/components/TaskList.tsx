@@ -77,15 +77,17 @@ const TaskList = ({
         filteredTasks = filteredTasks.filter((task) => {
           return (
             (!searchTerms.date ||
-              task.date
+              (task.date || "")
                 .toLowerCase()
                 .includes(searchTerms.date.toLowerCase())) &&
             (!searchTerms.time ||
-              task.time
+              (task.time || "")
                 .toLowerCase()
                 .includes(searchTerms.time.toLowerCase())) &&
             (!searchTerms.text ||
-              task.text.toLowerCase().includes(searchTerms.text.toLowerCase()))
+              (task.text || "")
+                .toLowerCase()
+                .includes(searchTerms.text.toLowerCase()))
           );
         });
       }

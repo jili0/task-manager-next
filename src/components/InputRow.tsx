@@ -1,5 +1,5 @@
 // src/components/InputRow.tsx
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { TaskFormData, ITask, IDraft } from "@/types";
 import { formatDate, formatTime, debounce } from "@/lib/utils";
 
@@ -58,8 +58,7 @@ const InputRow = ({
 
   const [isDraftLoaded, setIsDraftLoaded] = useState<boolean>(false);
 
-  // Debounced auto-save function
-  const debouncedSaveDraft = debounce(async (draftData: any) => {
+  const saveDraft = useCallback(async (draftData: any) => {
     try {
       await fetch("/api/drafts", {
         method: "POST",
@@ -69,7 +68,10 @@ const InputRow = ({
     } catch (error) {
       console.error("Error saving draft:", error);
     }
-  }, 500);
+  }, []);
+
+  // Stable debounced ref — never recreated, so the 500ms timer persists across renders
+  const debouncedSaveDraftRef = useRef(debounce(saveDraft, 500));
 
   const timeTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,9 +141,9 @@ const InputRow = ({
         time: newTask.time,
         text: newTask.text,
       };
-      debouncedSaveDraft(draftData);
+      debouncedSaveDraftRef.current(draftData);
     }
-  }, [newTask, isDraftLoaded, mode, debouncedSaveDraft]);
+  }, [newTask, isDraftLoaded, mode]);
 
   useEffect(() => {
     if (!isDraftLoaded) return;
@@ -154,9 +156,9 @@ const InputRow = ({
         time: editedTask.time,
         text: editedTask.text,
       };
-      debouncedSaveDraft(draftData);
+      debouncedSaveDraftRef.current(draftData);
     }
-  }, [editedTask, isDraftLoaded, mode, draftTaskId, debouncedSaveDraft]);
+  }, [editedTask, isDraftLoaded, mode, draftTaskId]);
 
   // Helper functions for add mode
   const getCurrentDate = (): string => {
@@ -285,11 +287,11 @@ const InputRow = ({
   const updateTimeFormat = () => {
     if (mode === "add") {
       if (newTask.time && newTask.time.match(/^\d{2}$/)) {
-        setNewTask((prev) => ({ ...prev, time: `${newTask.time}:00` }));
+        setNewTask((prev) => ({ ...prev, time: `${prev.time}:00` }));
       }
     } else if (mode === "edit") {
       if (editedTask.time && editedTask.time.match(/^\d{2}$/)) {
-        setEditedTask((prev) => ({ ...prev, time: `${editedTask.time}:00` }));
+        setEditedTask((prev) => ({ ...prev, time: `${prev.time}:00` }));
       }
     }
   };

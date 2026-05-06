@@ -28,6 +28,13 @@ const Login = () => {
       if (result?.error) {
         setError(result.error);
       } else {
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "persistent");
+          sessionStorage.removeItem("sessionActive");
+        } else {
+          sessionStorage.setItem("sessionActive", "1");
+          localStorage.removeItem("rememberMe");
+        }
         router.push("/");
         router.refresh();
       }
