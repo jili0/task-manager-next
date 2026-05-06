@@ -14,6 +14,15 @@ interface HeaderProps {
   userName?: string;
 }
 
+const handleSignOut = () => {
+  // Clear the rememberMe flags so they do not leak into a subsequent login
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("rememberMe");
+    sessionStorage.removeItem("sessionActive");
+  }
+  signOut({ callbackUrl: "/login" });
+};
+
 const Header = ({ title, buttons, userName }: HeaderProps) => {
   return (
     <header>
@@ -34,7 +43,7 @@ const Header = ({ title, buttons, userName }: HeaderProps) => {
           ))}
           {userName && (
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={handleSignOut}
               className="btn btn-header"
               title="Sign Out"
             >

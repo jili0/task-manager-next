@@ -56,67 +56,152 @@ export const sortTasks = (tasks: any[]): any[] => {
 };
 
 /**
- * Format date from various input formats
- * Returns clean date format: "DD.MM.YYYY" (without weekday)
- * Supports:
- * - "04" (day only)
- * - "0405" (day and month)
- * - "040525" (day, month, year)
+ * Format date from various input formats.
+ * Returns canonical format: "DD.MM.YYYY".
+ *
+ * Accepts:
+ * - Pure digits (1–6 chars): odd lengths get a leading-zero pad
+ *   "5" → "05.MM.YYYY", "504" → "05.04.YYYY", "040525" → "04.05.2025"
+ * - Mixed inputs with ".", ":", "-" or "/" as separators
+ *   "1.5.25" → "01.05.2025", "12-05-2026" → "12.05.2026"
+ * - Already-canonical "DD.MM.YYYY" → returned unchanged
+ *
+ * If the input cannot be interpreted, the original string is returned
+ * unchanged so the caller can show invalid feedback.
  */
 export const formatDate = (inputDate: string): string => {
   const today = new Date();
   const currentMonth = (today.getMonth() + 1).toString().padStart(2, "0");
   const currentYear = today.getFullYear();
 
-  // Format complete date (day, month, year: "040525")
-  if (inputDate.match(/^\d{6}$/)) {
-    const day = inputDate.substring(0, 2);
-    const month = inputDate.substring(2, 4);
-    const year = 2000 + parseInt(inputDate.substring(4, 6));
+  if (!inputDate) return "";
 
+  // Already canonical
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(inputDate)) {
+    return inputDate;
+  }
+
+  const expandYear = (y: string): string => {
+    if (y.length === 4) return y;
+    if (y.length === 2) return (2000 + parseInt(y)).toString();
+    if (y.length === 1) return (2000 + parseInt(y)).toString().padStart(4, "0");
+    if (y.length === 3) return y.padStart(4, "0");
+    return y;
+  };
+
+  // Mixed input with separators — split into components
+  if (/[.:\-/]/.test(inputDate)) {
+    const parts = inputDate.split(/[.:\-/]/).filter((p) => p !== "");
+    if (parts.length > 0 && parts.every((p) => /^\d+$/.test(p))) {
+      if (parts.length === 1) {
+        return `${parts[0].padStart(2, "0")}.${currentMonth}.${currentYear}`;
+      }
+      if (parts.length === 2) {
+        return `${parts[0].padStart(2, "0")}.${parts[1].padStart(2, "0")}.${currentYear}`;
+      }
+      if (parts.length === 3) {
+        return `${parts[0].padStart(2, "0")}.${parts[1].padStart(2, "0")}.${expandYear(parts[2])}`;
+      }
+    }
+    return inputDate;
+  }
+
+  // Pure digits — pad odd lengths to next even
+  const cleanDigits = inputDate.replace(/\D/g, "");
+  if (cleanDigits.length < 1 || cleanDigits.length > 6) {
+    return inputDate;
+  }
+  const padded =
+    cleanDigits.length % 2 === 1 ? "0" + cleanDigits : cleanDigits;
+
+  if (padded.length === 6) {
+    const day = padded.substring(0, 2);
+    const month = padded.substring(2, 4);
+    const year = 2000 + parseInt(padded.substring(4, 6));
     return `${day}.${month}.${year}`;
   }
-
-  // Format day and month ("0405")
-  if (inputDate.match(/^\d{4}$/)) {
-    const day = inputDate.substring(0, 2);
-    const month = inputDate.substring(2, 4);
-
+  if (padded.length === 4) {
+    const day = padded.substring(0, 2);
+    const month = padded.substring(2, 4);
     return `${day}.${month}.${currentYear}`;
   }
-
-  // Format day only ("04")
-  if (inputDate.match(/^\d{2}$/)) {
-    const day = inputDate;
-    const month = currentMonth;
-
-    return `${day}.${month}.${currentYear}`;
-  }
-
-  return inputDate;
+  return `${padded}.${currentMonth}.${currentYear}`;
 };
 
 /**
- * Format time from various input formats
- * Returns clean time format: "HH:MM" (without weekday)
- * Supports:
- * - "08" (hours only)
- * - "0800" (hours and minutes)
+ * Format time from various input formats.
+ * Returns canonical format: "HH:MM".
+ *
+ * Accepts:
+ * - Pure digits (1–4 chars): odd lengths get a leading-zero pad
+ *   "8" → "08:00", "830" → "08:30", "0830" → "08:30"
+ * - Mixed inputs with ".", ":", "-" or "/" as separators
+ *   "8.30" → "08:30", "8-30" → "08:30"
+ * - Already-canonical "HH:MM" → returned unchanged
  */
 export const formatTime = (inputTime: string): string => {
-  // Format hours and minutes ("0800")
-  if (inputTime.match(/^\d{4}$/)) {
-    const hours = inputTime.substring(0, 2);
-    const minutes = inputTime.substring(2, 4);
-    return `${hours}:${minutes}`;
+  if (!inputTime) return "";
+
+  if (/^\d{2}:\d{2}$/.test(inputTime)) {
+    return inputTime;
   }
 
-  // Format hours only ("08")
-  if (inputTime.match(/^\d{2}$/)) {
-    return `${inputTime}:00`;
+  if (/[.:\-/]/.test(inputTime)) {
+    const parts = inputTime.split(/[.:\-/]/).filter((p) => p !== "");
+    if (parts.length > 0 && parts.every((p) => /^\d+$/.test(p))) {
+      if (parts.length === 1) {
+        return `${parts[0].padStart(2, "0")}:00`;
+      }
+      if (parts.length === 2) {
+        return `${parts[0].padStart(2, "0")}:${parts[1].padStart(2, "0")}`;
+      }
+    }
+    return inputTime;
   }
 
-  return inputTime;
+  const cleanDigits = inputTime.replace(/\D/g, "");
+  if (cleanDigits.length < 1 || cleanDigits.length > 4) {
+    return inputTime;
+  }
+  const padded =
+    cleanDigits.length % 2 === 1 ? "0" + cleanDigits : cleanDigits;
+
+  if (padded.length === 4) {
+    return `${padded.substring(0, 2)}:${padded.substring(2, 4)}`;
+  }
+  return `${padded}:00`;
+};
+
+/**
+ * Validate canonical date string "DD.MM.YYYY" — checks ranges and real calendar dates
+ * (e.g. Feb 30 is rejected).
+ */
+export const isValidDateString = (dateStr: string): boolean => {
+  const match = dateStr.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!match) return false;
+  const day = parseInt(match[1]);
+  const month = parseInt(match[2]);
+  const year = parseInt(match[3]);
+  if (month < 1 || month > 12) return false;
+  if (day < 1 || day > 31) return false;
+  if (year < 1900 || year > 2199) return false;
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+};
+
+/**
+ * Validate canonical time string "HH:MM".
+ */
+export const isValidTimeString = (timeStr: string): boolean => {
+  const match = timeStr.match(/^(\d{2}):(\d{2})$/);
+  if (!match) return false;
+  const hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
 };
 
 /**
@@ -131,6 +216,7 @@ export const getWeekdayFromDate = (dateStr: string): string => {
 
   const [_, day, month, year] = match;
   const date = new Date(`${year}-${month}-${day}`);
+  if (isNaN(date.getTime())) return "";
   const days = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
   return days[date.getDay()];
 };
@@ -197,17 +283,35 @@ export const addDivider = (
 
   return null;
 };
+
+export type DebouncedFunction<T extends (...args: any[]) => void> = {
+  (...args: Parameters<T>): void;
+  cancel: () => void;
+};
+
 /**
- * Debounce function to limit API calls
+ * Debounce function with a cancel() method to abort a pending invocation.
  */
 export const debounce = <T extends (...args: any[]) => void>(
   func: T,
   delay: number
-): ((...args: Parameters<T>) => void) => {
-  let timeoutId: NodeJS.Timeout;
+): DebouncedFunction<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
+  const debounced = ((...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      func(...args);
+    }, delay);
+  }) as DebouncedFunction<T>;
+
+  debounced.cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
   };
+
+  return debounced;
 };

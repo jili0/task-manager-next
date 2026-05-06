@@ -1,7 +1,13 @@
 // src/components/InputRow.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { TaskFormData, ITask, IDraft } from "@/types";
-import { formatDate, formatTime, debounce } from "@/lib/utils";
+import { TaskFormData, ITask } from "@/types";
+import {
+  formatDate,
+  formatTime,
+  isValidDateString,
+  isValidTimeString,
+  debounce,
+} from "@/lib/utils";
 
 interface SearchState {
   date: string;
@@ -57,6 +63,11 @@ const InputRow = ({
   });
 
   const [isDraftLoaded, setIsDraftLoaded] = useState<boolean>(false);
+  const [userTouched, setUserTouched] = useState<boolean>(false);
+
+  // Visual feedback when a date/time value cannot be parsed as a real date/time
+  const [dateInvalid, setDateInvalid] = useState<boolean>(false);
+  const [timeInvalid, setTimeInvalid] = useState<boolean>(false);
 
   const saveDraft = useCallback(async (draftData: any) => {
     try {
@@ -130,9 +141,9 @@ const InputRow = ({
     }
   };
 
-  // Auto-save draft when values change
+  // Auto-save draft only after the user has actually typed something
   useEffect(() => {
-    if (!isDraftLoaded) return;
+    if (!isDraftLoaded || !userTouched) return;
 
     if (mode === "add") {
       const draftData = {
@@ -143,10 +154,10 @@ const InputRow = ({
       };
       debouncedSaveDraftRef.current(draftData);
     }
-  }, [newTask, isDraftLoaded, mode]);
+  }, [newTask, isDraftLoaded, mode, userTouched]);
 
   useEffect(() => {
-    if (!isDraftLoaded) return;
+    if (!isDraftLoaded || !userTouched) return;
 
     if (mode === "edit" && draftTaskId) {
       const draftData = {
@@ -158,7 +169,7 @@ const InputRow = ({
       };
       debouncedSaveDraftRef.current(draftData);
     }
-  }, [editedTask, isDraftLoaded, mode, draftTaskId]);
+  }, [editedTask, isDraftLoaded, mode, draftTaskId, userTouched]);
 
   // Helper functions for add mode
   const getCurrentDate = (): string => {
@@ -189,110 +200,152 @@ const InputRow = ({
     if (textAreaRef.current) {
       adjustTextareaHeight(textAreaRef.current);
     }
-  }, [mode === "add" ? newTask.text : mode === "edit" ? editedTask.text : ""]);
+  }, [
+    mode === "add"
+      ? newTask.text
+      : mode === "edit"
+        ? editedTask.text
+        : searchTerms?.text || "",
+  ]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
+
+    // Normalize separators so users can type ":" or "/" or "-" interchangeably
+    if ((mode === "add" || mode === "edit") && name === "date") {
+      value = value.replace(/[:/\-]/g, ".");
+    } else if ((mode === "add" || mode === "edit") && name === "time") {
+      value = value.replace(/[./\-]/g, ":");
+    }
+
+    // Clear invalid state as soon as the user starts editing
+    if (name === "date") setDateInvalid(false);
+    else if (name === "time") setTimeInvalid(false);
+
+    if (mode === "add" || mode === "edit") {
+      setUserTouched(true);
+    }
 
     if (mode === "add") {
-      // Special handling for date formatting
+      // Date — auto-format on 6 raw digits
       if (name === "date") {
-        if (value.match(/^\d{1,5}$/)) {
-          setNewTask((prev) => ({ ...prev, date: value }));
-          return;
-        } else if (value.match(/^\d{6}$/)) {
-          const formattedDate = formatDate(value);
-          setNewTask((prev) => ({ ...prev, date: formattedDate }));
-          timeTextareaRef.current?.focus();
+        if (/^\d{6}$/.test(value)) {
+          const formatted = formatDate(value);
+          setNewTask((prev) => ({ ...prev, date: formatted }));
+          if (isValidDateString(formatted)) {
+            timeTextareaRef.current?.focus();
+          } else {
+            setDateInvalid(true);
+          }
           return;
         }
+        setNewTask((prev) => ({ ...prev, date: value }));
+        return;
       }
 
-      // Special handling for time formatting
+      // Time — auto-format on 4 raw digits, then jump to text on success
       if (name === "time") {
-        if (value.match(/^\d{1,3}$/)) {
-          setNewTask((prev) => ({ ...prev, time: value }));
-          return;
-        } else if (value.match(/^\d{4}$/)) {
-          const formattedTime = formatTime(value);
-          setNewTask((prev) => ({ ...prev, time: formattedTime }));
+        if (/^\d{4}$/.test(value)) {
+          const formatted = formatTime(value);
+          setNewTask((prev) => ({ ...prev, time: formatted }));
+          if (isValidTimeString(formatted)) {
+            textAreaRef.current?.focus();
+          } else {
+            setTimeInvalid(true);
+          }
           return;
         }
+        setNewTask((prev) => ({ ...prev, time: value }));
+        return;
       }
 
-      // Auto-resize for text field only
       if (name === "text") {
         adjustTextareaHeight(e.target);
       }
 
       setNewTask((prev) => ({ ...prev, [name]: value }));
     } else if (mode === "edit") {
-      // Special handling for date formatting in edit mode
       if (name === "date") {
-        if (value.match(/^\d{1,5}$/)) {
-          setEditedTask((prev) => ({ ...prev, date: value }));
-          return;
-        } else if (value.match(/^\d{6}$/)) {
-          const formattedDate = formatDate(value);
-          setEditedTask((prev) => ({ ...prev, date: formattedDate }));
-          timeTextareaRef.current?.focus();
+        if (/^\d{6}$/.test(value)) {
+          const formatted = formatDate(value);
+          setEditedTask((prev) => ({ ...prev, date: formatted }));
+          if (isValidDateString(formatted)) {
+            timeTextareaRef.current?.focus();
+          } else {
+            setDateInvalid(true);
+          }
           return;
         }
+        setEditedTask((prev) => ({ ...prev, date: value }));
+        return;
       }
 
-      // Special handling for time formatting in edit mode
       if (name === "time") {
-        if (value.match(/^\d{1,3}$/)) {
-          setEditedTask((prev) => ({ ...prev, time: value }));
-          return;
-        } else if (value.match(/^\d{4}$/)) {
-          const formattedTime = formatTime(value);
-          setEditedTask((prev) => ({ ...prev, time: formattedTime }));
+        if (/^\d{4}$/.test(value)) {
+          const formatted = formatTime(value);
+          setEditedTask((prev) => ({ ...prev, time: formatted }));
+          if (isValidTimeString(formatted)) {
+            textAreaRef.current?.focus();
+          } else {
+            setTimeInvalid(true);
+          }
           return;
         }
+        setEditedTask((prev) => ({ ...prev, time: value }));
+        return;
       }
 
-      // Auto-resize for text field only
       if (name === "text") {
         adjustTextareaHeight(e.target);
       }
 
       setEditedTask((prev) => ({ ...prev, [name]: value }));
     } else if (mode === "search") {
-      // Search mode
+      if (name === "text") {
+        adjustTextareaHeight(e.target);
+      }
       onSearchChange?.(name as keyof SearchState, value);
     }
   };
 
   const updateDateFormat = () => {
     if (mode === "add") {
-      if (
-        newTask.date &&
-        (newTask.date.match(/^\d{2}$/) || newTask.date.match(/^\d{4}$/))
-      ) {
-        const formattedDate = formatDate(newTask.date);
-        setNewTask((prev) => ({ ...prev, date: formattedDate }));
+      if (!newTask.date) {
+        setDateInvalid(false);
+        return;
       }
+      const formatted = formatDate(newTask.date);
+      setNewTask((prev) => ({ ...prev, date: formatted }));
+      setDateInvalid(!isValidDateString(formatted));
     } else if (mode === "edit") {
-      if (
-        editedTask.date &&
-        (editedTask.date.match(/^\d{2}$/) || editedTask.date.match(/^\d{4}$/))
-      ) {
-        const formattedDate = formatDate(editedTask.date);
-        setEditedTask((prev) => ({ ...prev, date: formattedDate }));
+      if (!editedTask.date) {
+        setDateInvalid(false);
+        return;
       }
+      const formatted = formatDate(editedTask.date);
+      setEditedTask((prev) => ({ ...prev, date: formatted }));
+      setDateInvalid(!isValidDateString(formatted));
     }
   };
 
   const updateTimeFormat = () => {
     if (mode === "add") {
-      if (newTask.time && newTask.time.match(/^\d{2}$/)) {
-        setNewTask((prev) => ({ ...prev, time: `${prev.time}:00` }));
+      if (!newTask.time) {
+        setTimeInvalid(false);
+        return;
       }
+      const formatted = formatTime(newTask.time);
+      setNewTask((prev) => ({ ...prev, time: formatted }));
+      setTimeInvalid(!isValidTimeString(formatted));
     } else if (mode === "edit") {
-      if (editedTask.time && editedTask.time.match(/^\d{2}$/)) {
-        setEditedTask((prev) => ({ ...prev, time: `${prev.time}:00` }));
+      if (!editedTask.time) {
+        setTimeInvalid(false);
+        return;
       }
+      const formatted = formatTime(editedTask.time);
+      setEditedTask((prev) => ({ ...prev, time: formatted }));
+      setTimeInvalid(!isValidTimeString(formatted));
     }
   };
 
@@ -306,6 +359,28 @@ const InputRow = ({
     }
   };
 
+  // When a field is marked invalid, clicking back into it clears the bad value
+  // so the user can re-enter without manually deleting first.
+  const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    if (mode !== "add" && mode !== "edit") return;
+    const { name } = e.target;
+    if (name === "date" && dateInvalid) {
+      if (mode === "add") {
+        setNewTask((prev) => ({ ...prev, date: "" }));
+      } else {
+        setEditedTask((prev) => ({ ...prev, date: "" }));
+      }
+      setDateInvalid(false);
+    } else if (name === "time" && timeInvalid) {
+      if (mode === "add") {
+        setNewTask((prev) => ({ ...prev, time: "" }));
+      } else {
+        setEditedTask((prev) => ({ ...prev, time: "" }));
+      }
+      setTimeInvalid(false);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (mode !== "add" && mode !== "edit") return;
 
@@ -315,6 +390,7 @@ const InputRow = ({
         if (mode === "add") {
           if (!newTask.date.trim()) {
             setNewTask((prev) => ({ ...prev, date: getCurrentDate() }));
+            setDateInvalid(false);
           } else {
             updateDateFormat();
           }
@@ -330,6 +406,7 @@ const InputRow = ({
         if (mode === "add") {
           if (!newTask.time.trim()) {
             setNewTask((prev) => ({ ...prev, time: getCurrentTime() }));
+            setTimeInvalid(false);
           } else {
             updateTimeFormat();
           }
@@ -393,27 +470,67 @@ const InputRow = ({
 
   const handleAddTask = () => {
     if (mode !== "add") return;
+    if (!(newTask.date || newTask.time || newTask.text)) return;
 
-    if (newTask.date || newTask.time || newTask.text) {
-      const taskToAdd = {
-        date: newTask.date.trim() || getCurrentDate(),
-        time: newTask.time.trim() || getCurrentTime(),
-        text: newTask.text,
-      };
+    const formattedDate = newTask.date.trim() ? formatDate(newTask.date) : "";
+    const formattedTime = newTask.time.trim() ? formatTime(newTask.time) : "";
 
-      onAddTask?.(taskToAdd);
-      setNewTask({ date: "", time: "", text: "" });
-      deleteDraft(); // Delete draft after successful submission
+    if (formattedDate && !isValidDateString(formattedDate)) {
+      setNewTask((prev) => ({ ...prev, date: formattedDate }));
+      setDateInvalid(true);
+      return;
     }
+    if (formattedTime && !isValidTimeString(formattedTime)) {
+      setNewTask((prev) => ({ ...prev, time: formattedTime }));
+      setTimeInvalid(true);
+      return;
+    }
+
+    const taskToAdd = {
+      date: formattedDate || getCurrentDate(),
+      time: formattedTime || getCurrentTime(),
+      text: newTask.text,
+    };
+
+    onAddTask?.(taskToAdd);
+    setNewTask({ date: "", time: "", text: "" });
+    setDateInvalid(false);
+    setTimeInvalid(false);
+    setUserTouched(false);
+    debouncedSaveDraftRef.current.cancel();
+    deleteDraft();
   };
 
   const handleSaveEdit = () => {
     if (mode !== "edit") return;
+    if (!(editedTask.date || editedTask.time || editedTask.text)) return;
 
-    if (editedTask.date || editedTask.time || editedTask.text) {
-      onSaveEdit?.(editedTask);
-      deleteDraft(); // Delete draft after successful submission
+    const formattedDate = editedTask.date.trim()
+      ? formatDate(editedTask.date)
+      : "";
+    const formattedTime = editedTask.time.trim()
+      ? formatTime(editedTask.time)
+      : "";
+
+    if (formattedDate && !isValidDateString(formattedDate)) {
+      setEditedTask((prev) => ({ ...prev, date: formattedDate }));
+      setDateInvalid(true);
+      return;
     }
+    if (formattedTime && !isValidTimeString(formattedTime)) {
+      setEditedTask((prev) => ({ ...prev, time: formattedTime }));
+      setTimeInvalid(true);
+      return;
+    }
+
+    onSaveEdit?.({
+      ...editedTask,
+      date: formattedDate,
+      time: formattedTime,
+    });
+    setUserTouched(false);
+    debouncedSaveDraftRef.current.cancel();
+    deleteDraft();
   };
 
   const handleCancelEdit = () => {
@@ -445,6 +562,7 @@ const InputRow = ({
 
   const values = getValues();
   const placeholders = getPlaceholders();
+  const showInvalid = mode === "add" || mode === "edit";
 
   return (
     <div className="task-item task-item-input">
@@ -456,8 +574,17 @@ const InputRow = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
+            onFocus={handleFocus}
             placeholder={placeholders.date}
             autoFocus={mode === "edit"}
+            inputMode={mode !== "search" ? "numeric" : undefined}
+            className={showInvalid && dateInvalid ? "invalid" : undefined}
+            aria-invalid={showInvalid && dateInvalid ? true : undefined}
+            title={
+              showInvalid && dateInvalid
+                ? "Please enter a valid date (DD.MM.YYYY)"
+                : undefined
+            }
             rows={1}
           />
         </div>
@@ -468,8 +595,17 @@ const InputRow = ({
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
+            onFocus={handleFocus}
             placeholder={placeholders.time}
             ref={timeTextareaRef}
+            inputMode={mode !== "search" ? "numeric" : undefined}
+            className={showInvalid && timeInvalid ? "invalid" : undefined}
+            aria-invalid={showInvalid && timeInvalid ? true : undefined}
+            title={
+              showInvalid && timeInvalid
+                ? "Please enter a valid time (HH:MM)"
+                : undefined
+            }
             rows={1}
           />
         </div>

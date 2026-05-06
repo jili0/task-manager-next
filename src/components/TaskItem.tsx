@@ -1,5 +1,5 @@
 // src/components/TaskItem.tsx
-import React from "react";
+import React, { useState } from "react";
 import { ITask } from "@/types";
 import { formatTimeDisplay } from "@/lib/utils";
 import InputRow from "./InputRow";
@@ -63,10 +63,19 @@ const TaskItem = ({
     );
   };
 
-  // Function to copy line text to clipboard
-  const handleLineClick = async (lineText: string) => {
+  // Track which line was just copied so we can flash the background
+  const [copiedLineIndex, setCopiedLineIndex] = useState<number | null>(null);
+
+  // Double-click a line to copy its text. The flash class is removed after 300ms.
+  const handleLineDoubleClick = async (lineText: string, lineIndex: number) => {
     try {
       await navigator.clipboard.writeText(lineText);
+      setCopiedLineIndex(lineIndex);
+      setTimeout(() => {
+        setCopiedLineIndex((current) =>
+          current === lineIndex ? null : current
+        );
+      }, 300);
     } catch (error) {
       console.error("Failed to copy text:", error);
     }
@@ -113,9 +122,10 @@ const TaskItem = ({
           ? task.text.split("\n").map((line, i) => (
               <React.Fragment key={i}>
                 <span
-                  onClick={() => handleLineClick(line)}
+                  onDoubleClick={() => handleLineDoubleClick(line, i)}
+                  className={copiedLineIndex === i ? "copied" : undefined}
                   style={{ cursor: "pointer" }}
-                  title="Click to copy this line"
+                  title="Double click to copy this line"
                 >
                   {mode === "history" && searchTerms
                     ? highlightText(line, searchTerms.text)

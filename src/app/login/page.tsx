@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-const Login = () => {
+const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const successMessage = searchParams.get("success");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +51,9 @@ const Login = () => {
     <div className="login-container">
       <div className="login-form">
         <h1>Sign In</h1>
+        {successMessage && !error && (
+          <div className="success-message">{successMessage}</div>
+        )}
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -99,5 +104,11 @@ const Login = () => {
     </div>
   );
 };
+
+const Login = () => (
+  <Suspense fallback={<div className="loading">Loading...</div>}>
+    <LoginForm />
+  </Suspense>
+);
 
 export default Login;

@@ -167,6 +167,12 @@ header {
   word-wrap: break-word;
   overflow: hidden;
 }
+
+.task-item-input textarea.invalid {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+  color: #dc2626;
+}
 /* Task input row: datetime */
 .task-item-input .task-datetime-container {
   gap: 4px;
@@ -230,7 +236,7 @@ header {
   gap: 0 !important;
 }
 
-.task-item-text > span:active {
+.task-item-text > span.copied {
   background-color: greenyellow;
 }
 
@@ -333,6 +339,14 @@ mark {
   margin-bottom: 1rem;
   background-color: #fee2e2;
   color: #dc2626;
+  border-radius: 4px;
+}
+
+.success-message {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: #dcfce7;
+  color: #16a34a;
   border-radius: 4px;
 }
 

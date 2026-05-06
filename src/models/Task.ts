@@ -7,14 +7,17 @@ const TaskSchema = new Schema<ITask>(
     date: {
       type: String,
       required: false,
+      default: "",
     },
     time: {
       type: String,
       required: false,
+      default: "",
     },
     text: {
       type: String,
       required: false,
+      default: "",
     },
     isDone: {
       type: Boolean,
