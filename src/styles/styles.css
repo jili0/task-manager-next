@@ -217,7 +217,7 @@ header {
 
 .task-datetime-container {
   flex-direction: column;
-  width: max(10vw, 100px);
+  width: max(10vw, 115px);
 }
 
 .task-item-date,
