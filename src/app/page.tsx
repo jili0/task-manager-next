@@ -8,184 +8,132 @@ import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
 import { ITask } from "@/types";
 import { sortTasks } from "@/lib/utils";
+import { loadTasksCache, saveTasksCache } from "@/lib/taskCache";
 import "@/styles/styles.css";
 
 const Home = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const userId = (session?.user as any)?.id as string | undefined;
+
   const [tasks, setTasks] = useState<ITask[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect to login page if not authenticated
   useEffect(() => {
-    if (status === "loading") {
-      return;
-    }
-
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
+    if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Load tasks from server when authenticated
+  // Once we know who we are: read cache synchronously, then sync with server
+  // in the background. Cache failure must not block the fetch.
   useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      const fetchTasks = async () => {
-        try {
-          setError(null);
-          const response = await fetch("/api/tasks");
+    if (status !== "authenticated" || !userId) return;
 
-          if (response.ok) {
-            const data = await response.json();
-            setTasks(data);
-          } else if (response.status === 401) {
-            router.push("/login");
-          } else {
-            const errorData = await response.json();
-            setError(errorData.error || "Failed to load tasks");
-          }
-        } catch (error) {
-          setError("Error connecting to the server");
-          console.error("Error loading tasks:", error);
-        } finally {
-          setLoading(false);
+    const cached = loadTasksCache(userId);
+    if (cached && cached.length > 0) setTasks(sortTasks(cached));
+
+    (async () => {
+      try {
+        const res = await fetch("/api/tasks");
+        if (res.status === 401) return router.push("/login");
+        if (!res.ok) {
+          throw new Error((await res.json()).error || "Failed to load tasks");
         }
-      };
+        const data: ITask[] = await res.json();
+        setTasks(data);
+        saveTasksCache(userId, data);
+      } catch (e) {
+        // Stay silent if we already have something cached on screen
+        if (!cached || cached.length === 0) {
+          setError(
+            e instanceof Error ? e.message : "Error connecting to the server"
+          );
+        }
+      }
+    })();
+  }, [status, userId, router]);
 
-      fetchTasks();
-    } else if (status === "unauthenticated") {
-      setLoading(false);
-    }
-  }, [status, session, router]);
+  // setState + cache persist in one shot, using functional updates so chained
+  // mutations don't race on a stale `tasks` closure.
+  const persistTasks = (updater: (prev: ITask[]) => ITask[]) => {
+    setTasks((prev) => {
+      const next = updater(prev);
+      if (userId) saveTasksCache(userId, next);
+      return next;
+    });
+  };
 
-  // API functions
   const taskApi = {
     addTask: async (newTask: any) => {
       try {
         setError(null);
-        const response = await fetch("/api/tasks", {
+        const res = await fetch("/api/tasks", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newTask),
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setTasks((prevTasks) => sortTasks([...prevTasks, data]));
-        } else if (response.status === 401) {
-          router.push("/login");
-        } else {
-          const errorData = await response.json();
-          setError(errorData.error || "Failed to add task");
+        if (res.status === 401) return router.push("/login");
+        if (!res.ok) {
+          throw new Error((await res.json()).error || "Failed to add task");
         }
-      } catch (error) {
-        setError("Error connecting to the server");
-        console.error("Error adding task:", error);
+        const data = await res.json();
+        persistTasks((prev) => sortTasks([...prev, data]));
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Error connecting to the server"
+        );
       }
     },
 
-    updateTask: async (updatedTask: ITask) => {
+    updateTask: async (updated: ITask) => {
       try {
         setError(null);
-        const response = await fetch(`/api/tasks/${updatedTask._id}`, {
+        const res = await fetch(`/api/tasks/${updated._id}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedTask),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setTasks((prevTasks) =>
-            sortTasks(
-              prevTasks.map((task) => (task._id === data._id ? data : task))
-            )
-          );
-        } else if (response.status === 401) {
-          router.push("/login");
-        } else {
-          const errorData = await response.json();
-          setError(errorData.error || "Failed to update task");
+        if (res.status === 401) return router.push("/login");
+        if (!res.ok) {
+          throw new Error((await res.json()).error || "Failed to update task");
         }
-      } catch (error) {
-        setError("Error connecting to the server");
-        console.error("Error updating task:", error);
-      }
-    },
-
-    deleteTask: async (taskId: string) => {
-      try {
-        setError(null);
-        const response = await fetch(`/api/tasks/${taskId}`, {
-          method: "DELETE",
-        });
-
-        if (response.ok) {
-          setTasks((prevTasks) =>
-            prevTasks.filter((task) => task._id !== taskId)
-          );
-        } else if (response.status === 401) {
-          router.push("/login");
-        } else {
-          const errorData = await response.json();
-          setError(errorData.error || "Failed to delete task");
-        }
-      } catch (error) {
-        setError("Error connecting to the server");
-        console.error("Error deleting task:", error);
+        const data = await res.json();
+        persistTasks((prev) =>
+          sortTasks(prev.map((t) => (t._id === data._id ? data : t)))
+        );
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Error connecting to the server"
+        );
       }
     },
 
     toggleTaskDone: async (taskId: string) => {
       try {
         setError(null);
-        const response = await fetch(`/api/tasks/${taskId}`, {
-          method: "PATCH",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setTasks((prevTasks) =>
-            prevTasks.map((task) => (task._id === data._id ? data : task))
-          );
-        } else if (response.status === 401) {
-          router.push("/login");
-        } else {
-          const errorData = await response.json();
-          setError(errorData.error || "Failed to toggle task status");
+        const res = await fetch(`/api/tasks/${taskId}`, { method: "PATCH" });
+        if (res.status === 401) return router.push("/login");
+        if (!res.ok) {
+          throw new Error((await res.json()).error || "Failed to toggle task");
         }
-      } catch (error) {
-        setError("Error connecting to the server");
-        console.error("Error toggling task status:", error);
+        const data = await res.json();
+        persistTasks((prev) =>
+          prev.map((t) => (t._id === data._id ? data : t))
+        );
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "Error connecting to the server"
+        );
       }
     },
   };
 
-  const printTasks = () => {
-    window.print();
-  };
+  if (status === "unauthenticated") return null;
 
   const headerButtons = [
-    { label: "Print", onClick: printTasks },
+    { label: "Print", onClick: () => window.print() },
     { label: "JourFix", onClick: () => router.push("/jourfix") },
     { label: "History", onClick: () => router.push("/history") },
   ];
-
-  if (status === "loading") {
-    return <div className="loading">Loading...</div>;
-  }
-
-  if (status === "unauthenticated") {
-    return null;
-  }
-
-  if (loading) {
-    return <div className="loading">Loading tasks...</div>;
-  }
 
   return (
     <div className="app-container">
@@ -206,7 +154,6 @@ const Home = () => {
           mode="main"
           onAddTask={taskApi.addTask}
           onUpdateTask={taskApi.updateTask}
-          onDeleteTask={taskApi.deleteTask}
           onToggleTaskDone={taskApi.toggleTaskDone}
         />
       </div>

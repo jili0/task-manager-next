@@ -1,6 +1,7 @@
 // src/components/Header.tsx
 import React from "react";
 import { signOut } from "next-auth/react";
+import { clearAllTaskCaches } from "@/lib/taskCache";
 
 interface HeaderButton {
   label: string;
@@ -19,6 +20,7 @@ const handleSignOut = () => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("rememberMe");
     sessionStorage.removeItem("sessionActive");
+    clearAllTaskCaches();
   }
   signOut({ callbackUrl: "/login" });
 };
