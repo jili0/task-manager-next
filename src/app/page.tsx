@@ -67,11 +67,12 @@ const Home = () => {
         let rest: SyncOp[];
         try {
           rest = await processOp(op, queue);
-        } catch (e) {
-          // Either way we pause — the pending banner already conveys "not
-          // synced yet", so no extra error toast. HTTP errors stay logged
-          // for debugging; the queue stays at front for the next retry.
-          if (!isNetworkError(e)) console.error("Sync op failed:", e);
+        } catch {
+          // Either way we pause and retry later. We don't log here because
+          // Next.js dev overlay surfaces console.error, and the pending
+          // banner is the only signal the user needs. (HTTP failures —
+          // e.g. dev server reachable but Mongo Atlas is not when the
+          // browser is offline — also fall through here and get retried.)
           return;
         }
         queue = rest;
