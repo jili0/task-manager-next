@@ -257,6 +257,25 @@ header {
   border-bottom: 2px solid #2563eb;
 }
 
+/* JourFix recurring marker on task date */
+.recurring-marker {
+  display: inline-block;
+  margin-right: 4px;
+  color: #2563eb;
+  font-size: 0.9em;
+}
+
+/* JourFix weekday dropdown — match textarea look */
+.jourfix-weekday {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: end;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
 /* Highlight styles for search */
 mark {
   background-color: #fef08a;

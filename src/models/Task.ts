@@ -23,6 +23,16 @@ const TaskSchema = new Schema<ITask>(
       type: Boolean,
       default: false,
     },
+    isRecurring: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    seriesId: {
+      type: String,
+      required: false,
+      index: true,
+    },
     userId: {
       type: String,
       required: true,

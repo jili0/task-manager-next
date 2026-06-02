@@ -104,6 +104,9 @@ const TaskItem = ({
     >
       <div className="task-datetime-container">
         <div className="task-item-date">
+          {task.isRecurring && (
+            <span className="recurring-marker" title="JourFix series">♺</span>
+          )}
           {mode === "history" && searchTerms
             ? highlightText(task.date || "", searchTerms.date)
             : task.date || " "}

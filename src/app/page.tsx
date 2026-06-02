@@ -171,6 +171,7 @@ const Home = () => {
 
   const headerButtons = [
     { label: "Print", onClick: printTasks },
+    { label: "JourFix", onClick: () => router.push("/jourfix") },
     { label: "History", onClick: () => router.push("/history") },
   ];
 

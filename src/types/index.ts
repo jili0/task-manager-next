@@ -19,14 +19,32 @@ export interface ITask {
   time: string;
   text: string;
   isDone: boolean;
+  isRecurring?: boolean;
+  seriesId?: string;
   userId?: string;
   updatedAt?: Date;
 }
 
 export type TaskFormData = Omit<
   ITask,
-  "_id" | "isDone" | "userId" | "createdAt" | "updatedAt"
+  "_id" | "isDone" | "isRecurring" | "seriesId" | "userId" | "createdAt" | "updatedAt"
 >;
+
+export interface ISeries {
+  _id?: string;
+  userId: string;
+  weekday: number; // 0=Sunday … 6=Saturday (matches Date.getDay())
+  time: string;
+  text: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface SeriesFormData {
+  weekday: number;
+  time: string;
+  text: string;
+}
 
 export interface IDraft {
   _id?: string;

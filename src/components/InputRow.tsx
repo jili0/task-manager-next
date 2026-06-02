@@ -349,14 +349,35 @@ const InputRow = ({
     }
   };
 
+  // Read the DOM value directly instead of going through state. When the
+  // 6-digit auto-format in handleChange focuses the time field, blur fires
+  // synchronously before React commits — so the closure's newTask.date is
+  // still the pre-keystroke value and would re-format into garbage.
   const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-    if (mode === "add" || mode === "edit") {
-      if (e.target.name === "date") {
-        updateDateFormat();
-      } else if (e.target.name === "time") {
-        updateTimeFormat();
-      }
+    if (mode !== "add" && mode !== "edit") return;
+    const { name, value } = e.target;
+    if (name !== "date" && name !== "time") return;
+
+    if (!value) {
+      if (name === "date") setDateInvalid(false);
+      else setTimeInvalid(false);
+      return;
     }
+
+    const formatted =
+      name === "date" ? formatDate(value) : formatTime(value);
+    const valid =
+      name === "date"
+        ? isValidDateString(formatted)
+        : isValidTimeString(formatted);
+
+    if (mode === "add") {
+      setNewTask((prev) => ({ ...prev, [name]: formatted }));
+    } else {
+      setEditedTask((prev) => ({ ...prev, [name]: formatted }));
+    }
+    if (name === "date") setDateInvalid(!valid);
+    else setTimeInvalid(!valid);
   };
 
   // When a field is marked invalid, clicking back into it clears the bad value
