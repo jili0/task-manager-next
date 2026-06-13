@@ -59,6 +59,13 @@ const Header = ({ title, currentPage, userName }: HeaderProps) => {
                 <span className="offline-label">Offline-Modus</span>
               )}
               <span className="user-name">Hello, {userName}</span>
+              <button
+                onClick={handleSignOut}
+                className="btn btn-header"
+                title="Sign Out"
+              >
+                Sign Out
+              </button>
             </span>
           )}
         </div>
@@ -85,15 +92,6 @@ const Header = ({ title, currentPage, userName }: HeaderProps) => {
           >
             Print
           </button>
-          {userName && (
-            <button
-              onClick={handleSignOut}
-              className="btn btn-header"
-              title="Sign Out"
-            >
-              Sign Out
-            </button>
-          )}
         </div>
       </div>
     </header>
