@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -13,6 +13,14 @@ const LoginForm = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  // Refs so we can read the actual DOM values at submit time. Browser
+  // password-autofill (especially Brave on mobile) writes to the input's
+  // .value without firing a React-friendly onChange — so the controlled
+  // state stays empty and signIn gets "" / "". Reading from the ref first
+  // catches autofilled values; the state still drives the visible value
+  // for normal typing.
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const successMessage = searchParams.get("success");
@@ -22,11 +30,14 @@ const LoginForm = () => {
     setLoading(true);
     setError("");
 
+    const emailValue = emailRef.current?.value || email;
+    const passwordValue = passwordRef.current?.value || password;
+
     try {
       const result = await signIn("credentials", {
         redirect: false,
-        email,
-        password,
+        email: emailValue,
+        password: passwordValue,
       });
 
       if (result?.error) {
@@ -81,6 +92,7 @@ const LoginForm = () => {
             <input
               id="email"
               type="email"
+              ref={emailRef}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -92,6 +104,7 @@ const LoginForm = () => {
             <input
               id="password"
               type="password"
+              ref={passwordRef}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
