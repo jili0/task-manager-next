@@ -149,7 +149,6 @@ const JourFix = () => {
                   setForm((f) => ({ ...f, time: formatTime(e.target.value) }))
                 }
                 placeholder="Time"
-                inputMode="numeric"
                 rows={1}
               />
             </div>

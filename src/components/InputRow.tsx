@@ -606,7 +606,6 @@ const InputRow = ({
             onFocus={handleFocus}
             placeholder={placeholders.date}
             autoFocus={mode === "edit"}
-            inputMode={mode !== "search" ? "numeric" : undefined}
             className={showInvalid && dateInvalid ? "invalid" : undefined}
             aria-invalid={showInvalid && dateInvalid ? true : undefined}
             title={
@@ -627,7 +626,6 @@ const InputRow = ({
             onFocus={handleFocus}
             placeholder={placeholders.time}
             ref={timeTextareaRef}
-            inputMode={mode !== "search" ? "numeric" : undefined}
             className={showInvalid && timeInvalid ? "invalid" : undefined}
             aria-invalid={showInvalid && timeInvalid ? true : undefined}
             title={
