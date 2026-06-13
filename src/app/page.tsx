@@ -28,11 +28,25 @@ const Home = () => {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState<number>(0);
+  // Suppress the pending banner during the brief window between enqueue and
+  // a successful sync — online edits flush in <100ms and a flicker is more
+  // distracting than informative. Only surface the banner once an op has
+  // actually been stuck for a moment (offline, or a real network/sync delay).
+  const [bannerVisible, setBannerVisible] = useState<boolean>(false);
   const syncingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
+
+  useEffect(() => {
+    if (pendingCount === 0) {
+      setBannerVisible(false);
+      return;
+    }
+    const id = setTimeout(() => setBannerVisible(true), 600);
+    return () => clearTimeout(id);
+  }, [pendingCount]);
 
   // setState + cache persist in one shot (functional setter so chained calls
   // never race on a stale `tasks` closure).
@@ -255,7 +269,7 @@ const Home = () => {
         currentPage="home"
         userName={session?.user?.name || ""}
       />
-      {pendingCount > 0 && (
+      {bannerVisible && pendingCount > 0 && (
         <div className="pending-banner">
           <p>
             {pendingCount === 1
