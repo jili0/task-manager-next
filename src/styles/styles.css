@@ -28,8 +28,9 @@ select {
 /* iOS Safari's zoom heuristic looks at the computed font-size at focus time.
    On narrow viewports the body font-size collapses to 14px (the clamp floor)
    and any class-level rule using `font: inherit` would otherwise re-apply
-   that 14px. Force a hard 16px on small screens for everything focusable. */
-@media (max-width: 768px) {
+   that 14px. Force a hard 16px on small screens for everything focusable.
+   `screen and` so the rule doesn't bleed into print output. */
+@media screen and (max-width: 768px) {
   input,
   textarea,
   select {
@@ -505,8 +506,9 @@ mark {
   text-decoration: underline;
 }
 
-/* Mobile responsive styles */
-@media (max-width: 768px) {
+/* Mobile responsive styles. `screen and` so print output keeps the desktop
+   layout even when the device viewport is narrow. */
+@media screen and (max-width: 768px) {
   .header-content {
     flex-direction: column;
     align-items: flex-end;
