@@ -439,7 +439,22 @@ const InputRow = ({
       }
 
       if (e.currentTarget.name === "text") {
-        if (e.metaKey || e.shiftKey || e.altKey || e.ctrlKey) {
+        const noMod = !e.shiftKey && !e.metaKey && !e.altKey && !e.ctrlKey;
+        const onlyShift = e.shiftKey && !e.metaKey && !e.altKey && !e.ctrlKey;
+
+        if (onlyShift) {
+          // Shift+Enter → save in both add and edit.
+          e.preventDefault();
+          if (mode === "add") {
+            handleAddTask();
+          } else {
+            handleSaveEdit();
+          }
+        } else if (noMod) {
+          // Bare Enter → linebreak, handled natively by the textarea.
+        } else {
+          // Meta/Alt/Ctrl+Enter → insert linebreak manually, since browsers
+          // ignore modifier+Enter on textareas.
           e.preventDefault();
           const textarea = e.currentTarget;
           const start = textarea.selectionStart;
@@ -457,13 +472,6 @@ const InputRow = ({
           setTimeout(() => {
             textarea.selectionStart = textarea.selectionEnd = start + 1;
           }, 0);
-        } else {
-          e.preventDefault();
-          if (mode === "add") {
-            handleAddTask();
-          } else if (mode === "edit") {
-            handleSaveEdit();
-          }
         }
       }
     }

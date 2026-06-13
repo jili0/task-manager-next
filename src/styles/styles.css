@@ -255,6 +255,12 @@ header {
   background-color: greenyellow;
 }
 
+/* Empty spans (consecutive \n in the task text) would otherwise collapse to
+   zero height inside the flex column. Preserve them at one line each. */
+.task-item-text > span {
+  min-height: 1lh;
+}
+
 .task-item-actions {
   flex-direction: column;
   justify-content: flex-start;
