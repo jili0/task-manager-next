@@ -245,7 +245,10 @@ header {
 
 .task-datetime-container {
   flex-direction: column;
-  width: max(10vw, 115px);
+  /* Fixed 115px on desktop — the date text is at most ~95px at the body's
+     clamped 18px font, so any growth beyond 115px just steals room from the
+     task text without serving a purpose. */
+  width: 115px;
   flex-shrink: 0;
 }
 
@@ -533,11 +536,13 @@ mark {
     padding-top: 10vh;
   }
 
-  /* Narrower date/time column on mobile so the task text has more room.
-     115px → 86px is ~25% reduction; nowrap on the date/time children keeps
-     "DD.MM.YYYY" and "Mo, HH:MM" on a single line at 16px font. */
+  /* Narrower date/time column on phone widths, scaling up smoothly to meet
+     the desktop value of 115px right at the 768px breakpoint. Without the
+     scaling, at ~640–768px viewport the date text (which follows the body
+     font's clamp(14px, 2.5vw, 18px)) outgrows a fixed-width 86px column and
+     overlaps the task text. 15vw hits 115px at viewport 767px → no jump. */
   .task-datetime-container {
-    width: 86px;
+    width: clamp(86px, 15vw, 115px);
   }
 
   .login-form {
