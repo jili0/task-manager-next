@@ -3,20 +3,23 @@
 
 import React, { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { clearAllTaskCaches } from "@/lib/taskCache";
 import { clearAllQueues } from "@/lib/syncQueue";
 
-interface HeaderButton {
-  label: string;
-  onClick: () => void;
-  className?: string;
-}
+export type HeaderPage = "home" | "jourfix" | "history";
 
 interface HeaderProps {
   title: string;
-  buttons: HeaderButton[];
+  currentPage: HeaderPage;
   userName?: string;
 }
+
+const NAV: { id: HeaderPage; label: string; href: string }[] = [
+  { id: "home", label: "Start", href: "/" },
+  { id: "jourfix", label: "JourFix", href: "/jourfix" },
+  { id: "history", label: "History", href: "/history" },
+];
 
 const handleSignOut = () => {
   // Clear the rememberMe flags so they do not leak into a subsequent login
@@ -29,7 +32,8 @@ const handleSignOut = () => {
   signOut({ callbackUrl: "/login" });
 };
 
-const Header = ({ title, buttons, userName }: HeaderProps) => {
+const Header = ({ title, currentPage, userName }: HeaderProps) => {
+  const router = useRouter();
   // Default to online to avoid a hydration mismatch; the effect corrects it
   // on mount and keeps it in sync via the browser online/offline events.
   const [isOnline, setIsOnline] = useState<boolean>(true);
@@ -59,15 +63,28 @@ const Header = ({ title, buttons, userName }: HeaderProps) => {
           )}
         </div>
         <div className="header-right">
-          {buttons.map((button, index) => (
-            <button
-              key={index}
-              onClick={button.onClick}
-              className={button.className || "btn btn-header"}
-            >
-              {button.label}
-            </button>
-          ))}
+          {NAV.map((item) => {
+            const isActive = item.id === currentPage;
+            return (
+              <button
+                key={item.id}
+                onClick={() => !isActive && router.push(item.href)}
+                aria-current={isActive ? "page" : undefined}
+                className={
+                  "btn btn-header" + (isActive ? " btn-header-active" : "")
+                }
+              >
+                {item.label}
+              </button>
+            );
+          })}
+          <button
+            onClick={() => window.print()}
+            className="btn btn-header"
+            title="Print"
+          >
+            Print
+          </button>
           {userName && (
             <button
               onClick={handleSignOut}

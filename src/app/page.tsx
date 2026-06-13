@@ -248,17 +248,11 @@ const Home = () => {
 
   if (status === "unauthenticated") return null;
 
-  const headerButtons = [
-    { label: "Print", onClick: () => window.print() },
-    { label: "JourFix", onClick: () => router.push("/jourfix") },
-    { label: "History", onClick: () => router.push("/history") },
-  ];
-
   return (
     <div className="app-container">
       <Header
         title="Tasks"
-        buttons={headerButtons}
+        currentPage="home"
         userName={session?.user?.name || ""}
       />
       {pendingCount > 0 && (

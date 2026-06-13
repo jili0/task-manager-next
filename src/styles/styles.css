@@ -110,6 +110,13 @@ header {
   background-color: #eff6ff;
 }
 
+.btn-header-active,
+.btn-header-active:hover {
+  background-color: #2563eb;
+  color: #fff;
+  cursor: default;
+}
+
 .btn-primary {
   color: #2563eb;
   border-color: #93c5fd;

@@ -143,15 +143,6 @@ const History = () => {
     }
   };
 
-  const printTasks = () => {
-    window.print();
-  };
-
-  const headerButtons = [
-    { label: "Back", onClick: () => router.push("/") },
-    { label: "Print", onClick: printTasks },
-  ];
-
   if (status === "loading") {
     return <div className="loading">Loading...</div>;
   }
@@ -168,7 +159,7 @@ const History = () => {
     <div className="app-container">
       <Header
         title="Tasks"
-        buttons={headerButtons}
+        currentPage="history"
         userName={session?.user?.name || ""}
       />
       {error && (

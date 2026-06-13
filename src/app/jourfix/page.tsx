@@ -113,7 +113,7 @@ const JourFix = () => {
     <div className="app-container">
       <Header
         title="JourFix"
-        buttons={[{ label: "Back", onClick: () => router.push("/") }]}
+        currentPage="jourfix"
         userName={session?.user?.name || ""}
       />
       {error && (
