@@ -17,8 +17,12 @@ body {
 }
 
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+  /* Prevent iOS Safari's auto-zoom on focus — it kicks in whenever an input
+     resolves to <16px and the user has to pinch-zoom back out manually. */
+  font-size: max(16px, 1em);
 }
 
 ::placeholder {
