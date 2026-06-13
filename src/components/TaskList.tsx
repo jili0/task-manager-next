@@ -14,6 +14,8 @@ interface SearchState {
 interface TaskListProps {
   tasks: ITask[];
   mode: "main" | "history";
+  // Render skeleton rows while the initial task fetch is in flight.
+  loading?: boolean;
 
   // Main mode props
   onAddTask?: (task: TaskFormData) => void;
@@ -25,9 +27,27 @@ interface TaskListProps {
   onUndoTask?: (taskId: string) => void;
 }
 
+const TaskSkeleton = () => (
+  <div className="task-item task-item-skeleton" aria-hidden="true">
+    <div className="task-datetime-container">
+      <div className="task-item-date">
+        <div className="skeleton-bar" />
+      </div>
+      <div className="task-item-time">
+        <div className="skeleton-bar" />
+      </div>
+    </div>
+    <div className="task-item-text">
+      <div className="skeleton-bar" />
+    </div>
+    <div className="task-item-actions" />
+  </div>
+);
+
 const TaskList = ({
   tasks,
   mode,
+  loading = false,
   onAddTask,
   onUpdateTask,
   onDeleteTask,
@@ -107,6 +127,15 @@ const TaskList = ({
         onSearchChange={mode === "history" ? handleSearchChange : undefined}
         draftMode={mode === "main" ? "add" : undefined}
       />
+
+      {loading && filteredTasks.length === 0 && mode === "main" && (
+        <>
+          <TaskSkeleton />
+          <TaskSkeleton />
+          <TaskSkeleton />
+          <TaskSkeleton />
+        </>
+      )}
 
       {filteredTasks.map((task, index) => {
         return (

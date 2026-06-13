@@ -1,9 +1,11 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { saveTasksCache } from "@/lib/taskCache";
+import { ITask } from "@/types";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -37,6 +39,24 @@ const LoginForm = () => {
           sessionStorage.setItem("sessionActive", "1");
           localStorage.removeItem("rememberMe");
         }
+
+        // Prefetch tasks so the home page can paint from cache instantly
+        // instead of blocking for ~1s on the first GET /api/tasks.
+        // Failure is non-fatal — home falls back to the normal fetch path.
+        try {
+          const [session, tasksRes] = await Promise.all([
+            getSession(),
+            fetch("/api/tasks"),
+          ]);
+          const userId = (session?.user as { id?: string } | undefined)?.id;
+          if (userId && tasksRes.ok) {
+            const tasks: ITask[] = await tasksRes.json();
+            saveTasksCache(userId, tasks);
+          }
+        } catch {
+          // ignore — home page will fetch as usual
+        }
+
         router.push("/");
         router.refresh();
       }

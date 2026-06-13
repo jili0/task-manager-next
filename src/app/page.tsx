@@ -32,6 +32,9 @@ const Home = () => {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState<number>(0);
+  // True until either cache paints something, or the initial server fetch
+  // resolves. Drives the skeleton placeholders in TaskList.
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
   // Suppress the pending banner during the brief window between enqueue and
   // a successful sync — online edits flush in <100ms and a flicker is more
   // distracting than informative. Only surface the banner once an op has
@@ -202,7 +205,10 @@ const Home = () => {
     const last = loadLastUserId();
     if (!last) return;
     const cached = loadTasksCache(last);
-    if (cached && cached.tasks.length > 0) setTasks(sortTasks(cached.tasks));
+    if (cached && cached.tasks.length > 0) {
+      setTasks(sortTasks(cached.tasks));
+      setInitialLoading(false);
+    }
     const queueLen = loadQueue(last).length;
     if (queueLen > 0) setPendingCount(queueLen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,6 +227,8 @@ const Home = () => {
       setTasks(cached ? sortTasks(cached.tasks) : []);
       setPendingCount(loadQueue(userId).length);
     }
+    // Cache covers this user → no skeleton needed.
+    if (cached && cached.tasks.length > 0) setInitialLoading(false);
     const cacheAge = cached ? Date.now() - cached.savedAt : Infinity;
 
     (async () => {
@@ -242,6 +250,7 @@ const Home = () => {
 
       if (cacheAge < FRESH_CACHE_MS) {
         // Cache was written less than a minute ago — trust it, skip the GET.
+        setInitialLoading(false);
         return;
       }
 
@@ -261,6 +270,8 @@ const Home = () => {
             e instanceof Error ? e.message : "Error connecting to the server"
           );
         }
+      } finally {
+        setInitialLoading(false);
       }
     })();
   }, [status, userId, router]);
@@ -337,6 +348,7 @@ const Home = () => {
         <TaskList
           tasks={tasks}
           mode="main"
+          loading={initialLoading}
           onAddTask={taskApi.addTask}
           onUpdateTask={taskApi.updateTask}
           onToggleTaskDone={taskApi.toggleTaskDone}
