@@ -128,20 +128,30 @@ const TaskItem = ({
       </div>
       <div className="task-item-text">
         {task.text
-          ? task.text.split("\n").map((line, i) => (
-              <React.Fragment key={i}>
-                <span
-                  onDoubleClick={() => handleLineDoubleClick(line, i)}
-                  className={copiedLineIndex === i ? "copied" : undefined}
-                  style={{ cursor: "pointer" }}
-                  title="Double click to copy this line"
-                >
-                  {mode === "history" && searchTerms
-                    ? highlightText(line, searchTerms.text)
-                    : line}
-                </span>
-              </React.Fragment>
-            ))
+          ? (() => {
+              // Preserve empty lines between content but trim leading/trailing
+              // blank lines — those are usually accidental and produce ugly
+              // top/bottom padding in the row.
+              const lines = task.text.split("\n");
+              let from = 0;
+              let to = lines.length;
+              while (from < to && lines[from] === "") from++;
+              while (to > from && lines[to - 1] === "") to--;
+              return lines.slice(from, to).map((line, i) => (
+                <React.Fragment key={i}>
+                  <span
+                    onDoubleClick={() => handleLineDoubleClick(line, i)}
+                    className={copiedLineIndex === i ? "copied" : undefined}
+                    style={{ cursor: "pointer" }}
+                    title="Double click to copy this line"
+                  >
+                    {mode === "history" && searchTerms
+                      ? highlightText(line, searchTerms.text)
+                      : line}
+                  </span>
+                </React.Fragment>
+              ));
+            })()
           : " "}
       </div>
       <div className="task-item-actions">
