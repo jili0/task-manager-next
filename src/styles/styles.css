@@ -103,17 +103,19 @@ header {
   color: #2563eb;
   font: inherit;
   padding-block: 0;
-  margin-block: 4px;
+  margin: 0;
+  border: 0;
 }
 
 .btn-header:hover {
   background-color: #eff6ff;
 }
 
+/* Active page indicator — visually identical to .offline-label so the whole
+   header row sits on the same baseline. */
 .btn-header-active,
 .btn-header-active:hover {
-  background-color: #2563eb;
-  color: #fff;
+  background-color: #93c5fd;
   cursor: default;
 }
 
