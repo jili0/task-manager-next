@@ -1,5 +1,5 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -13,6 +13,13 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+};
+
+// Explicit viewport so iOS Safari has a clear starting point and doesn't
+// re-scale weirdly after the on-focus auto-zoom would otherwise kick in.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {

@@ -25,6 +25,18 @@ select {
   font-size: max(16px, 1em);
 }
 
+/* iOS Safari's zoom heuristic looks at the computed font-size at focus time.
+   On narrow viewports the body font-size collapses to 14px (the clamp floor)
+   and any class-level rule using `font: inherit` would otherwise re-apply
+   that 14px. Force a hard 16px on small screens for everything focusable. */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 ::placeholder {
   letter-spacing: -1px;
 }
@@ -322,7 +334,11 @@ header {
   border: none;
   background: transparent;
   text-align: end;
-  font: inherit;
+  /* Inherit font properties individually so we don't clobber the
+     iOS-zoom-prevention font-size from the global input/select rule. */
+  font-family: inherit;
+  font-style: inherit;
+  font-weight: inherit;
   cursor: pointer;
   padding: 0;
 }
