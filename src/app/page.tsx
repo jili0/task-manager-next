@@ -10,6 +10,7 @@ import { ITask } from "@/types";
 import { sortTasks } from "@/lib/utils";
 import { loadTasksCache, saveTasksCache } from "@/lib/taskCache";
 import {
+  PermanentSyncError,
   SyncOp,
   isNetworkError,
   isTempId,
@@ -54,9 +55,10 @@ const Home = () => {
     persistQueue([...loadQueue(userId), op]);
   };
 
-  // Process queue ops in order. A network failure pauses the loop and leaves
-  // the op at the front of the queue — the banner stays up until a later
-  // sync attempt (online event or next mount) succeeds.
+  // Process queue ops in order. Transient failures (network, 5xx) pause the
+  // loop and leave the op at the front for a later retry. Permanent failures
+  // (4xx — e.g. task deleted server-side, invalid id) drop the op and
+  // continue, so one bad op can't block the rest of the queue forever.
   const runSync = async () => {
     if (!userId || syncingRef.current) return;
     syncingRef.current = true;
@@ -67,13 +69,19 @@ const Home = () => {
         let rest: SyncOp[];
         try {
           rest = await processOp(op, queue);
-        } catch {
-          // Either way we pause and retry later. We don't log here because
-          // Next.js dev overlay surfaces console.error, and the pending
-          // banner is the only signal the user needs. (HTTP failures —
-          // e.g. dev server reachable but Mongo Atlas is not when the
-          // browser is offline — also fall through here and get retried.)
-          return;
+        } catch (e) {
+          if (e instanceof PermanentSyncError) {
+            console.warn("Dropping unsyncable op:", op, e.message);
+            // If an add failed permanently, the optimistic temp task in the
+            // UI will never become real — remove it.
+            if (op.type === "add") {
+              persistTasks((prev) => prev.filter((t) => t._id !== op.tempId));
+            }
+            rest = queue.slice(1);
+          } else {
+            console.error("Sync paused, will retry:", e);
+            return;
+          }
         }
         queue = rest;
         persistQueue(queue);
@@ -83,6 +91,22 @@ const Home = () => {
     }
   };
 
+  // 401 -> login + transient throw; 4xx -> permanent (drop op); 5xx -> transient (retry).
+  const failFor = async (res: Response, fallback: string): Promise<never> => {
+    if (res.status === 401) {
+      router.push("/login");
+      throw new Error("Not authenticated");
+    }
+    const msg = await res
+      .json()
+      .then((b) => b?.error || fallback)
+      .catch(() => fallback);
+    if (res.status >= 400 && res.status < 500) {
+      throw new PermanentSyncError(`${res.status}: ${msg}`);
+    }
+    throw new Error(`${res.status}: ${msg}`);
+  };
+
   const processOp = async (op: SyncOp, queue: SyncOp[]): Promise<SyncOp[]> => {
     if (op.type === "add") {
       const res = await fetch("/api/tasks", {
@@ -90,11 +114,7 @@ const Home = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(op.payload),
       });
-      if (res.status === 401) {
-        router.push("/login");
-        throw new Error("Not authenticated");
-      }
-      if (!res.ok) throw new Error((await res.json()).error || "Add failed");
+      if (!res.ok) await failFor(res, "Add failed");
       const real: ITask = await res.json();
       persistTasks((prev) =>
         sortTasks(prev.map((t) => (t._id === op.tempId ? real : t)))
@@ -107,17 +127,19 @@ const Home = () => {
           : q
       );
     }
+    // update / toggle: a temp id means the preceding "add" was dropped as
+    // permanent — this op is now orphaned. Drop it too instead of POSTing a
+    // guaranteed-CastError request.
+    if (isTempId(op.taskId)) {
+      throw new PermanentSyncError(`Orphaned op for unresolved temp id ${op.taskId}`);
+    }
     if (op.type === "update") {
       const res = await fetch(`/api/tasks/${op.taskId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(op.payload),
       });
-      if (res.status === 401) {
-        router.push("/login");
-        throw new Error("Not authenticated");
-      }
-      if (!res.ok) throw new Error((await res.json()).error || "Update failed");
+      if (!res.ok) await failFor(res, "Update failed");
       const data: ITask = await res.json();
       persistTasks((prev) =>
         sortTasks(prev.map((t) => (t._id === data._id ? data : t)))
@@ -126,11 +148,7 @@ const Home = () => {
     }
     // toggle
     const res = await fetch(`/api/tasks/${op.taskId}`, { method: "PATCH" });
-    if (res.status === 401) {
-      router.push("/login");
-      throw new Error("Not authenticated");
-    }
-    if (!res.ok) throw new Error((await res.json()).error || "Toggle failed");
+    if (!res.ok) await failFor(res, "Toggle failed");
     const data: ITask = await res.json();
     persistTasks((prev) => prev.map((t) => (t._id === data._id ? data : t)));
     return queue.slice(1);

@@ -51,6 +51,17 @@ export const clearAllQueues = (): void => {
 // the user needs to see, not something to retry silently.
 export const isNetworkError = (e: unknown): boolean => e instanceof TypeError;
 
+// Thrown by processOp for HTTP failures that won't succeed on retry
+// (4xx — task was deleted, invalid id, validation error). Dropping these
+// from the queue prevents one bad op from blocking all later ones forever.
+export class PermanentSyncError extends Error {
+  readonly permanent = true;
+  constructor(message: string) {
+    super(message);
+    this.name = "PermanentSyncError";
+  }
+}
+
 export const tempTaskId = (): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return `temp:${crypto.randomUUID()}`;
