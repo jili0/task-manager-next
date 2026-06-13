@@ -320,7 +320,12 @@ const Home = () => {
     },
   };
 
-  if (status === "unauthenticated") return null;
+  // Don't render anything until we know whether the user is signed in.
+  // Otherwise a first-time visitor sees the home shell + skeleton flash for
+  // a second before being redirected to /login. The mount-only useEffect
+  // still runs (React mounts even when render returns null), so a cached
+  // returning user's tasks are already in state by the time we render.
+  if (status !== "authenticated") return null;
 
   return (
     <div className="app-container">
