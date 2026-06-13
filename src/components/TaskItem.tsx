@@ -1,7 +1,7 @@
 // src/components/TaskItem.tsx
 import React, { useState } from "react";
 import { ITask } from "@/types";
-import { formatTimeDisplay } from "@/lib/utils";
+import { formatTimeDisplay, isValidDateString } from "@/lib/utils";
 import InputRow from "./InputRow";
 
 interface SearchState {
@@ -96,6 +96,7 @@ const TaskItem = ({
   }
 
   // Render display mode
+  const dateInvalid = !!task.date && !isValidDateString(task.date);
   return (
     <div
       className={`task-item ${index % 2 === 0 ? "" : "even"} ${
@@ -103,7 +104,12 @@ const TaskItem = ({
       } ${dividerType === "year" ? "last-of-year" : ""}`}
     >
       <div className="task-datetime-container">
-        <div className="task-item-date">
+        <div
+          className={
+            "task-item-date" + (dateInvalid ? " task-item-date-invalid" : "")
+          }
+          title={dateInvalid ? "Ungültiges Datum — bitte bearbeiten" : undefined}
+        >
           {task.isRecurring && (
             <span className="recurring-marker" title="JourFix series">♺</span>
           )}

@@ -5,6 +5,7 @@ import dbConnect from '@/lib/db';
 import Task from '@/models/Task';
 import { sortTasks } from '@/lib/utils';
 import { authOptions } from '@/lib/auth';
+import { parseDateString } from '@/lib/jourfix';
 
 // Helper to get the current user's ID from session
 const getUserId = async () => {
@@ -30,7 +31,14 @@ export const GET = async () => {
     // JourFix cleanup moved to its own endpoint (POST /api/jourfix/cleanup)
     // so the tasks fetch isn't blocked by the daily housekeeping work.
     const tasks = await Task.find({ userId }).sort({ createdAt: -1 });
-    return NextResponse.json(sortTasks(tasks));
+    // Defensive: hide recurring tasks with an unparseable date. These are
+    // legacy orphans (the series template, not a dated instance) that should
+    // only live in the Series collection and be visible on the JourFix page.
+    // runJourFixCleanup deletes them permanently on the next daily run.
+    const visible = tasks.filter(
+      (t) => !t.isRecurring || parseDateString(t.date) !== null
+    );
+    return NextResponse.json(sortTasks(visible));
   } catch (error: unknown) {
     const errorMessage = error instanceof Error 
       ? error.message 

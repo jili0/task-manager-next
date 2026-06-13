@@ -239,6 +239,13 @@ header {
   text-align: end;
 }
 
+/* Date string is non-empty but doesn't parse as a valid calendar date
+   (e.g. "11.14.2026"). Flag it so the user can spot and fix it. */
+.task-item-date-invalid {
+  color: #dc2626;
+  font-weight: 600;
+}
+
 .task-item-text {
   flex: 1;
   min-width: 0;

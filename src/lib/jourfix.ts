@@ -149,16 +149,18 @@ export const runJourFixCleanup = async (userId: string): Promise<boolean> => {
 
   let changed = false;
 
-  // 1. Delete past, undone JourFix instances. Past done ones stay in history.
-  const allRecurring = await Task.find({
-    userId,
-    isRecurring: true,
-    isDone: false,
-  });
+  // 1. Delete two kinds of recurring tasks:
+  //    a) orphans: isRecurring=true with an unparseable date. These pre-date
+  //       the dated-instance design and have no place on either main or
+  //       history page. Done state doesn't matter — there's no usable date.
+  //    b) past undone: regular instances that are in the past and not done.
+  //       Past *done* ones stay in history.
+  const allRecurring = await Task.find({ userId, isRecurring: true });
   const idsToDelete = allRecurring
     .filter((t) => {
       const d = parseDateString(t.date);
-      return d !== null && d < today;
+      if (d === null) return true;
+      return d < today && !t.isDone;
     })
     .map((t) => t._id);
   if (idsToDelete.length > 0) {
