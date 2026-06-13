@@ -131,19 +131,23 @@ export const deleteFutureUndoneInstances = async (
 /**
  * Daily cleanup: deletes past undone JourFix instances and tops up
  * future instances for every series. No-op if already run today.
+ * Returns true if anything was actually deleted or inserted, so callers
+ * can decide whether to refresh their task list.
  */
-export const runJourFixCleanup = async (userId: string): Promise<void> => {
+export const runJourFixCleanup = async (userId: string): Promise<boolean> => {
   await dbConnect();
 
   const user = await User.findById(userId);
-  if (!user) return;
+  if (!user) return false;
 
   const today = startOfDay(new Date());
 
   if (user.lastJourFixCleanup) {
     const last = startOfDay(new Date(user.lastJourFixCleanup));
-    if (last >= today) return;
+    if (last >= today) return false;
   }
+
+  let changed = false;
 
   // 1. Delete past, undone JourFix instances. Past done ones stay in history.
   const allRecurring = await Task.find({
@@ -159,15 +163,18 @@ export const runJourFixCleanup = async (userId: string): Promise<void> => {
     .map((t) => t._id);
   if (idsToDelete.length > 0) {
     await Task.deleteMany({ _id: { $in: idsToDelete } });
+    changed = true;
   }
 
   // 2. Top up each active series.
   const allSeries = await Series.find({ userId });
   for (const series of allSeries) {
-    await ensureFutureInstances(series, today);
+    const added = await ensureFutureInstances(series, today);
+    if (added > 0) changed = true;
   }
 
   // 3. Mark cleanup done for today.
   user.lastJourFixCleanup = today;
   await user.save();
+  return changed;
 };

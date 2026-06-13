@@ -8,7 +8,11 @@ import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
 import { ITask } from "@/types";
 import { sortTasks } from "@/lib/utils";
-import { loadTasksCache, saveTasksCache } from "@/lib/taskCache";
+import {
+  loadLastUserId,
+  loadTasksCache,
+  saveTasksCache,
+} from "@/lib/taskCache";
 import {
   PermanentSyncError,
   SyncOp,
@@ -168,17 +172,79 @@ const Home = () => {
     return queue.slice(1);
   };
 
-  // Initial load: cache (sync), then flush queue, then fetch authoritative
-  // server data. Each step independent — failures don't block the next.
+  // Server tasks → local state, preserving any locally-pending ops. Server is
+  // authoritative for shared IDs; tasks missing from the response have been
+  // removed server-side (e.g. JourFix cleanup) unless we still have a pending
+  // op for them.
+  const applyServerTasks = (data: ITask[], uid: string) => {
+    const pendingIds = new Set<string>();
+    for (const op of loadQueue(uid)) {
+      pendingIds.add(op.type === "add" ? op.tempId : op.taskId);
+    }
+    persistTasks((prev) => {
+      const serverIds = new Set(data.map((t) => t._id));
+      const local = prev.filter(
+        (t) =>
+          t._id && !serverIds.has(t._id) && pendingIds.has(t._id as string)
+      );
+      return sortTasks([...data, ...local]);
+    });
+  };
+
+  // Cache considered "fresh" within this window — skip the redundant
+  // server fetch on mount. Sync queue + cleanup still run regardless.
+  const FRESH_CACHE_MS = 60_000;
+
+  // Mount-only: paint cached tasks for whoever last used this browser before
+  // NextAuth's session round-trip resolves. Removes the 1-2s blank gap when
+  // opening the app in a fresh tab.
+  useEffect(() => {
+    const last = loadLastUserId();
+    if (!last) return;
+    const cached = loadTasksCache(last);
+    if (cached && cached.tasks.length > 0) setTasks(sortTasks(cached.tasks));
+    const queueLen = loadQueue(last).length;
+    if (queueLen > 0) setPendingCount(queueLen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Session-resolved load: sync queue, fire JourFix cleanup off the critical
+  // path, and only fetch the canonical task list if the cache is stale.
   useEffect(() => {
     if (status !== "authenticated" || !userId) return;
 
+    // If mount painted a different user's cache (rare: user switched accounts
+    // in this browser since last visit), swap to the current user's view.
+    const last = loadLastUserId();
     const cached = loadTasksCache(userId);
-    if (cached && cached.length > 0) setTasks(sortTasks(cached));
-    setPendingCount(loadQueue(userId).length);
+    if (last !== userId) {
+      setTasks(cached ? sortTasks(cached.tasks) : []);
+      setPendingCount(loadQueue(userId).length);
+    }
+    const cacheAge = cached ? Date.now() - cached.savedAt : Infinity;
 
     (async () => {
       await runSync();
+
+      // Daily JourFix cleanup, off the critical path. Server returns the
+      // post-cleanup task list iff it actually changed anything; otherwise
+      // a tiny no-op response.
+      fetch("/api/jourfix/cleanup", { method: "POST" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((result) => {
+          if (result?.changed && Array.isArray(result.tasks)) {
+            applyServerTasks(result.tasks as ITask[], userId);
+          }
+        })
+        .catch(() => {
+          // cleanup failures are non-fatal — they'll re-run on next mount
+        });
+
+      if (cacheAge < FRESH_CACHE_MS) {
+        // Cache was written less than a minute ago — trust it, skip the GET.
+        return;
+      }
+
       try {
         const res = await fetch("/api/tasks");
         if (res.status === 401) return router.push("/login");
@@ -186,28 +252,11 @@ const Home = () => {
           throw new Error((await res.json()).error || "Failed to load tasks");
         }
         const data: ITask[] = await res.json();
-        // Only preserve local tasks that have unsynced ops (temp adds, or
-        // pending update/toggle). Anything else missing from the server has
-        // been authoritatively removed (e.g. JourFix cleanup deleting past
-        // undone instances) and must drop locally too.
-        const pendingIds = new Set<string>();
-        for (const op of loadQueue(userId)) {
-          pendingIds.add(op.type === "add" ? op.tempId : op.taskId);
-        }
-        persistTasks((prev) => {
-          const serverIds = new Set(data.map((t) => t._id));
-          const local = prev.filter(
-            (t) =>
-              t._id &&
-              !serverIds.has(t._id) &&
-              pendingIds.has(t._id as string)
-          );
-          return sortTasks([...data, ...local]);
-        });
+        applyServerTasks(data, userId);
       } catch (e) {
         // Suppress if cache already populated the screen, or if it's just
         // a network hiccup — banner / cached UI already conveys state.
-        if ((!cached || cached.length === 0) && !isNetworkError(e)) {
+        if ((!cached || cached.tasks.length === 0) && !isNetworkError(e)) {
           setError(
             e instanceof Error ? e.message : "Error connecting to the server"
           );

@@ -5,7 +5,6 @@ import dbConnect from '@/lib/db';
 import Task from '@/models/Task';
 import { sortTasks } from '@/lib/utils';
 import { authOptions } from '@/lib/auth';
-import { runJourFixCleanup } from '@/lib/jourfix';
 
 // Helper to get the current user's ID from session
 const getUserId = async () => {
@@ -27,9 +26,9 @@ export const GET = async () => {
   try {
     const userId = await getUserId();
     await dbConnect();
-    await runJourFixCleanup(userId);
 
-    // Only get tasks for the current user
+    // JourFix cleanup moved to its own endpoint (POST /api/jourfix/cleanup)
+    // so the tasks fetch isn't blocked by the daily housekeeping work.
     const tasks = await Task.find({ userId }).sort({ createdAt: -1 });
     return NextResponse.json(sortTasks(tasks));
   } catch (error: unknown) {
