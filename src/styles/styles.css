@@ -253,6 +253,9 @@ header {
   width: 100%;
   flex: 1;
   text-align: end;
+  /* Date/time strings are short — keep them on a single line even if the
+     container gets tight (especially on mobile where the column is narrow). */
+  white-space: nowrap;
 }
 
 /* Date string is non-empty but doesn't parse as a valid calendar date
@@ -519,6 +522,20 @@ mark {
   .btn svg {
     width: 12px;
     height: 12px;
+  }
+
+  /* Halve the gap between the form and the top of the viewport on mobile —
+     keeping it vertically centered leaves a lot of dead space up there. */
+  .login-container {
+    align-items: flex-start;
+    padding-top: 10vh;
+  }
+
+  /* Narrower date/time column on mobile so the task text has more room.
+     115px → 86px is ~25% reduction; nowrap on the date/time children keeps
+     "DD.MM.YYYY" and "Mo, HH:MM" on a single line at 16px font. */
+  .task-datetime-container {
+    width: 86px;
   }
 
   .login-form {
