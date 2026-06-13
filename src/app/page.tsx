@@ -172,12 +172,22 @@ const Home = () => {
           throw new Error((await res.json()).error || "Failed to load tasks");
         }
         const data: ITask[] = await res.json();
+        // Only preserve local tasks that have unsynced ops (temp adds, or
+        // pending update/toggle). Anything else missing from the server has
+        // been authoritatively removed (e.g. JourFix cleanup deleting past
+        // undone instances) and must drop locally too.
+        const pendingIds = new Set<string>();
+        for (const op of loadQueue(userId)) {
+          pendingIds.add(op.type === "add" ? op.tempId : op.taskId);
+        }
         persistTasks((prev) => {
-          // Server is authoritative for shared IDs. Keep local-only tasks
-          // (temp ones still in queue, or just-synced reals the GET request
-          // may have missed due to request ordering).
           const serverIds = new Set(data.map((t) => t._id));
-          const local = prev.filter((t) => t._id && !serverIds.has(t._id));
+          const local = prev.filter(
+            (t) =>
+              t._id &&
+              !serverIds.has(t._id) &&
+              pendingIds.has(t._id as string)
+          );
           return sortTasks([...data, ...local]);
         });
       } catch (e) {
