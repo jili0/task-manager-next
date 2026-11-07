@@ -1,52 +1,25 @@
-// src/models/Task.ts
-import mongoose, { Schema } from 'mongoose';
-import { ITask } from '@/types';
+import mongoose, { Schema } from "mongoose";
+import { ITask } from "@/types";
 
 const TaskSchema = new Schema<ITask>(
   {
-    date: {
-      type: String,
-      required: false,
-      default: "",
-    },
-    time: {
-      type: String,
-      required: false,
-      default: "",
-    },
-    text: {
-      type: String,
-      required: false,
-      default: "",
-    },
-    isDone: {
-      type: Boolean,
-      default: false,
-    },
-    isRecurring: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-    seriesId: {
-      type: String,
-      required: false,
-      index: true,
-    },
-    userId: {
-      type: String,
-      required: true,
-      index: true
-    }
+    date: { type: String, default: "" },
+    time: { type: String, default: "" },
+    text: { type: String, default: "" },
+    isDone: { type: Boolean, default: false, index: true },
+    userId: { type: String, required: true, index: true },
+    birthdayId: { type: String },
+    birthdayYear: { type: Number },
   },
-  {
-    timestamps: true,
-    // This will make it work with both new tasks and existing tasks
-    validateBeforeSave: false
-  }
+  { timestamps: true }
 );
 
-// Create model only if it doesn't already exist
-const Task = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);
+TaskSchema.index(
+  { userId: 1, birthdayId: 1, birthdayYear: 1 },
+  { unique: true, partialFilterExpression: { birthdayId: { $type: "string" } } }
+);
+
+if (mongoose.models.Task) mongoose.deleteModel("Task");
+const Task = mongoose.model<ITask>("Task", TaskSchema);
 
 export default Task;

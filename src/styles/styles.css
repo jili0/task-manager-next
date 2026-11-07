@@ -1,4 +1,3 @@
-/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,9 +5,6 @@
 }
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
   color: #333;
   background-color: #fff;
   line-height: 1.5;
@@ -20,16 +16,9 @@ input,
 textarea,
 select {
   font: inherit;
-  /* Prevent iOS Safari's auto-zoom on focus — it kicks in whenever an input
-     resolves to <16px and the user has to pinch-zoom back out manually. */
   font-size: max(16px, 1em);
 }
 
-/* iOS Safari's zoom heuristic looks at the computed font-size at focus time.
-   On narrow viewports the body font-size collapses to 14px (the clamp floor)
-   and any class-level rule using `font: inherit` would otherwise re-apply
-   that 14px. Force a hard 16px on small screens for everything focusable.
-   `screen and` so the rule doesn't bleed into print output. */
 @media screen and (max-width: 768px) {
   input,
   textarea,
@@ -60,7 +49,6 @@ select {
   margin: 0 auto;
 }
 
-/* Header */
 header {
   background-color: #fff;
   border-bottom: 1px solid #e5e5e5;
@@ -100,7 +88,6 @@ header {
   transform: rotate(-13deg) scale(1.2) translate(3px, -3px);
 }
 
-/* Buttons - Base styles */
 .btn {
   padding: 4px;
   cursor: pointer;
@@ -115,7 +102,10 @@ header {
   margin: 0 auto;
 }
 
-/* Button variants */
+.btn-static {
+  cursor: default;
+}
+
 .btn-header {
   color: #2563eb;
   font: inherit;
@@ -128,8 +118,6 @@ header {
   background-color: #eff6ff;
 }
 
-/* Active page indicator — visually identical to .offline-label so the whole
-   header row sits on the same baseline. */
 .btn-header-active,
 .btn-header-active:hover {
   background-color: #93c5fd;
@@ -172,12 +160,10 @@ header {
   background-color: #fef2f2;
 }
 
-/* Task list */
 .task-list {
   width: 100%;
 }
 
-/* Task input row */
 .task-item-input {
   border: none;
 }
@@ -201,7 +187,7 @@ header {
   background-color: #fef2f2;
   color: #dc2626;
 }
-/* Task input row: datetime */
+
 .task-item-input .task-datetime-container {
   gap: 4px;
   padding: 4px 0;
@@ -212,7 +198,6 @@ header {
 .task-item-input .task-datetime-container .task-item-time textarea {
   text-align: end;
 }
-/* Task input row: text */
 
 .task-item-input .task-item-text {
   padding: 4px 0;
@@ -220,7 +205,6 @@ header {
   white-space: nowrap;
 }
 
-/* Task items */
 .task-item {
   display: flex;
   gap: 8px;
@@ -245,9 +229,6 @@ header {
 
 .task-datetime-container {
   flex-direction: column;
-  /* Fixed 115px on desktop — the date text is at most ~95px at the body's
-     clamped 18px font, so any growth beyond 115px just steals room from the
-     task text without serving a purpose. */
   width: 115px;
   flex-shrink: 0;
 }
@@ -257,13 +238,9 @@ header {
   width: 100%;
   flex: 1;
   text-align: end;
-  /* Date/time strings are short — keep them on a single line even if the
-     container gets tight (especially on mobile where the column is narrow). */
   white-space: nowrap;
 }
 
-/* Date string is non-empty but doesn't parse as a valid calendar date
-   (e.g. "11.14.2026"). Flag it so the user can spot and fix it. */
 .task-item-date-invalid {
   color: #dc2626;
   font-weight: 600;
@@ -285,16 +262,11 @@ header {
   background-color: greenyellow;
 }
 
-/* Empty spans (consecutive \n in the task text) would otherwise collapse to
-   zero height inside the flex column. Preserve them at one line each. */
 .task-item-text > span {
   min-height: 1lh;
 }
 
-/* Skeleton placeholders shown during the first load when no cache is hit
-   (typically right after a fresh login). Same row layout as real tasks so
-   the layout doesn't jump when data arrives. */
-.task-item-skeleton .skeleton-bar {
+.skeleton-bar {
   height: 1lh;
   width: 100%;
   border-radius: 4px;
@@ -302,12 +274,18 @@ header {
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
+
 .task-item-skeleton .task-item-text .skeleton-bar {
   width: 70%;
 }
+
 @keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .task-item-actions {
@@ -318,7 +296,6 @@ header {
   width: auto;
 }
 
-/* month and year dividers */
 .task-item.last-of-month {
   border-bottom: 2px solid #dc2626;
 }
@@ -327,37 +304,79 @@ header {
   border-bottom: 2px solid #2563eb;
 }
 
-/* JourFix recurring marker on task date */
 .recurring-marker {
   display: inline-block;
   margin-right: 4px;
-  color: #2563eb;
   font-size: 0.9em;
 }
 
-/* JourFix weekday dropdown — match textarea look */
-.jourfix-weekday {
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: end;
-  /* Inherit font properties individually so we don't clobber the
-     iOS-zoom-prevention font-size from the global input/select rule. */
-  font-family: inherit;
-  font-style: inherit;
-  font-weight: inherit;
-  cursor: pointer;
-  padding: 0;
+.birthday-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  min-height: 42px;
+  border-bottom: 1px solid #e5e5e5;
+  background-color: #fff;
 }
 
-/* Highlight styles for search */
+.birthday-row.even,
+.birthday-row-input {
+  background-color: #f9fafb;
+}
+
+.birthday-row-input {
+  border: none;
+}
+
+.birthday-row .birthday-date {
+  flex-shrink: 0;
+  width: 115px;
+  text-align: end;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+
+.birthday-row .birthday-name {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+.birthday-row-input input {
+  color: #3b82f6;
+  display: block;
+  width: 100%;
+  border: 1px solid gainsboro;
+  border-radius: 8px;
+  outline: none;
+  padding: 4px;
+  background: #fff;
+}
+
+.birthday-row-input .birthday-date input {
+  text-align: end;
+}
+
+.birthday-row-input input.invalid {
+  border-color: #dc2626;
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.birthday-row .birthday-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 1px;
+}
+
 mark {
   background-color: #fef08a;
   color: inherit;
   padding: 0;
 }
 
-/* Login styles */
 .login-container {
   display: flex;
   justify-content: center;
@@ -408,6 +427,20 @@ mark {
   box-shadow: 0 0 0 1px #3b82f6;
 }
 
+.form-group-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group-inline input {
+  width: auto;
+}
+
+.form-group-inline label {
+  margin-bottom: 0;
+}
+
 .login-button {
   width: 100%;
   padding: 0.75rem;
@@ -450,8 +483,6 @@ mark {
   text-align: center;
 }
 
-/* Offline-mode pill, sits inline before "Hello, …" in the header.
-   Same visual weight as an edit button at rest, font inherits. */
 .offline-label {
   color: #2563eb;
   background-color: #93c5fd;
@@ -460,26 +491,41 @@ mark {
   font: inherit;
 }
 
-/* Wrapper so the offline pill sits tight next to "Hello, …" instead of
-   getting the 50px header-left gap between them. */
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Pending-sync banner — neutral info, not an error */
 .pending-banner {
   background-color: #fef3c7;
   color: #78350f;
   padding-inline: 4px;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
+
 .pending-banner p {
   margin: 0;
 }
 
-/* Error banner */
+.pending-banner button {
+  background-color: transparent;
+  border: 1px solid #b45309;
+  border-radius: 4px;
+  color: #78350f;
+  font: inherit;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.pending-banner button:hover {
+  background-color: #fde68a;
+}
+
 .error-banner {
   background-color: #fee2e2;
   color: #dc2626;
@@ -509,9 +555,114 @@ mark {
   text-decoration: underline;
 }
 
-/* Mobile responsive styles. `screen and` so print output keeps the desktop
-   layout even when the device viewport is narrow. */
+.account {
+  display: grid;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.account-card {
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.account-profile,
+.account-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.account-profile {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+.account-identity {
+  min-width: 0;
+}
+
+.account-identity p {
+  overflow-wrap: anywhere;
+}
+
+.account h2 {
+  font-size: 1.15em;
+}
+
+.account-btn {
+  padding: 8px 16px;
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.account-btn:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.account-fields {
+  grid-column: 1 / -1;
+}
+
+.account-fields .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.account-input {
+  position: relative;
+}
+
+.account-input input {
+  padding: 4px 44px 4px 4px;
+  border: 1px solid gainsboro;
+  border-radius: 8px;
+}
+
+.account-eye {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  padding: 2px;
+  color: #6b7280;
+}
+
+.account-mismatch {
+  margin-top: 4px;
+  font-size: 0.85em;
+  color: #dc2626;
+}
+
 @media screen and (max-width: 768px) {
+  .birthday-row .birthday-date {
+    width: clamp(86px, 15vw, 115px);
+  }
+
+  .account-profile {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .account-form {
+    grid-template-columns: 1fr;
+  }
+
+  .account-btn {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
   .header-content {
     flex-direction: column;
     align-items: flex-end;
@@ -529,18 +680,11 @@ mark {
     height: 12px;
   }
 
-  /* Halve the gap between the form and the top of the viewport on mobile —
-     keeping it vertically centered leaves a lot of dead space up there. */
   .login-container {
     align-items: flex-start;
     padding-top: 10vh;
   }
 
-  /* Narrower date/time column on phone widths, scaling up smoothly to meet
-     the desktop value of 115px right at the 768px breakpoint. Without the
-     scaling, at ~640–768px viewport the date text (which follows the body
-     font's clamp(14px, 2.5vw, 18px)) outgrows a fixed-width 86px column and
-     overlaps the task text. 15vw hits 115px at viewport 767px → no jump. */
   .task-datetime-container {
     width: clamp(86px, 15vw, 115px);
   }
@@ -548,10 +692,6 @@ mark {
   .login-form {
     padding: 1.5rem;
     margin: 0 16px;
-  }
-
-  .login-form h1 {
-    font-size: clamp(18px, 3vw, 28px);
   }
 
   .form-group input {
@@ -563,11 +703,15 @@ mark {
   }
 }
 
-/* Print styles */
 @media print {
   .header-right,
   .user-name,
-  .task-item-input {
+  .task-item-input,
+  .birthday-row-input,
+  .pending-banner,
+  .error-banner,
+  .task-item-actions,
+  .birthday-actions {
     display: none !important;
   }
 }

@@ -1,18 +1,13 @@
-// src/app/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import TaskList from "@/components/TaskList";
-import { ITask } from "@/types";
+import { ITask, TaskFormData } from "@/types";
 import { sortTasks } from "@/lib/utils";
-import {
-  loadLastUserId,
-  loadTasksCache,
-  saveTasksCache,
-} from "@/lib/taskCache";
+import { createCache } from "@/lib/localCache";
 import {
   PermanentSyncError,
   SyncOp,
@@ -22,315 +17,281 @@ import {
   saveQueue,
   tempTaskId,
 } from "@/lib/syncQueue";
-import "@/styles/styles.css";
+
+const tasksCache = createCache<ITask>("tasks");
+
+const BANNER_DELAY_MS = 600;
+const RETRY_BASE_MS = 5_000;
+const RETRY_MAX_MS = 60_000;
 
 const Home = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const userId = (session?.user as any)?.id as string | undefined;
+  const userId = session?.user?.id;
 
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [pendingCount, setPendingCount] = useState<number>(0);
-  // True until either cache paints something, or the initial server fetch
-  // resolves. Drives the skeleton placeholders in TaskList.
-  const [initialLoading, setInitialLoading] = useState<boolean>(true);
-  // Suppress the pending banner during the brief window between enqueue and
-  // a successful sync — online edits flush in <100ms and a flicker is more
-  // distracting than informative. Only surface the banner once an op has
-  // actually been stuck for a moment (offline, or a real network/sync delay).
-  const [bannerVisible, setBannerVisible] = useState<boolean>(false);
-  const syncingRef = useRef<boolean>(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const [syncFailed, setSyncFailed] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
+
+  const syncingRef = useRef<Promise<void> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryAttemptRef = useRef(0);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
   useEffect(() => {
-    if (pendingCount === 0) {
-      setBannerVisible(false);
-      return;
-    }
-    const id = setTimeout(() => setBannerVisible(true), 600);
+    const id = setTimeout(
+      () => setBannerVisible(pendingCount > 0),
+      pendingCount > 0 ? BANNER_DELAY_MS : 0
+    );
     return () => clearTimeout(id);
   }, [pendingCount]);
 
-  // setState + cache persist in one shot (functional setter so chained calls
-  // never race on a stale `tasks` closure).
-  const persistTasks = (updater: (prev: ITask[]) => ITask[]) => {
-    setTasks((prev) => {
-      const next = updater(prev);
-      if (userId) saveTasksCache(userId, next);
-      return next;
-    });
-  };
+  const persistTasks = useCallback(
+    (updater: (prev: ITask[]) => ITask[]) => {
+      setTasks((prev) => {
+        const next = updater(prev);
+        if (userId) tasksCache.save(userId, next.filter((t) => !t.isDone));
+        return next;
+      });
+    },
+    [userId]
+  );
 
-  const persistQueue = (next: SyncOp[]) => {
-    if (!userId) return;
-    saveQueue(userId, next);
-    setPendingCount(next.length);
-  };
+  const persistQueue = useCallback(
+    (next: SyncOp[]) => {
+      if (!userId) return;
+      saveQueue(userId, next);
+      setPendingCount(next.length);
+    },
+    [userId]
+  );
 
-  const enqueue = (op: SyncOp) => {
-    if (!userId) return;
-    persistQueue([...loadQueue(userId), op]);
-  };
+  const failFor = useCallback(
+    async (res: Response, fallback: string): Promise<never> => {
+      if (res.status === 401) {
+        router.push("/login");
+        throw new Error("Not signed in");
+      }
+      const msg = await res
+        .json()
+        .then((b) => b?.error || fallback)
+        .catch(() => fallback);
+      if (res.status >= 400 && res.status < 500) {
+        throw new PermanentSyncError(`${res.status}: ${msg}`);
+      }
+      throw new Error(`${res.status}: ${msg}`);
+    },
+    [router]
+  );
 
-  // Process queue ops in order. Transient failures (network, 5xx) pause the
-  // loop and leave the op at the front for a later retry. Permanent failures
-  // (4xx — e.g. task deleted server-side, invalid id) drop the op and
-  // continue, so one bad op can't block the rest of the queue forever.
-  const runSync = async () => {
-    if (!userId || syncingRef.current) return;
-    syncingRef.current = true;
-    try {
+  const processOp = useCallback(
+    async (op: SyncOp, queue: SyncOp[]): Promise<SyncOp[]> => {
+      if (op.type === "add") {
+        const res = await fetch("/api/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(op.payload),
+        });
+        if (!res.ok) await failFor(res, "Create failed");
+        const real: ITask = await res.json();
+        persistTasks((prev) =>
+          sortTasks(prev.map((t) => (t._id === op.tempId ? real : t)))
+        );
+        return queue.slice(1).map((q) =>
+          "taskId" in q && q.taskId === op.tempId
+            ? { ...q, taskId: real._id as string }
+            : q
+        );
+      }
+
+      if (isTempId(op.taskId)) {
+        throw new PermanentSyncError(`Orphaned operation for ${op.taskId}`);
+      }
+
+      const res =
+        op.type === "update"
+          ? await fetch(`/api/tasks/${op.taskId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(op.payload),
+            })
+          : await fetch(`/api/tasks/${op.taskId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ isDone: op.isDone }),
+            });
+      if (!res.ok) await failFor(res, "Save failed");
+      const data: ITask = await res.json();
+      persistTasks((prev) =>
+        sortTasks(prev.map((t) => (t._id === data._id ? data : t)))
+      );
+      return queue.slice(1);
+    },
+    [failFor, persistTasks]
+  );
+
+  const runSync = useCallback((): Promise<void> => {
+    if (!userId) return Promise.resolve();
+    if (syncingRef.current) return syncingRef.current;
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+    const run = async () => {
       let queue = loadQueue(userId);
       while (queue.length > 0) {
         const op = queue[0];
         let rest: SyncOp[];
         try {
           rest = await processOp(op, queue);
+          retryAttemptRef.current = 0;
+          setSyncFailed(false);
         } catch (e) {
           if (e instanceof PermanentSyncError) {
-            console.warn("Dropping unsyncable op:", op, e.message);
-            // If an add failed permanently, the optimistic temp task in the
-            // UI will never become real — remove it.
             if (op.type === "add") {
               persistTasks((prev) => prev.filter((t) => t._id !== op.tempId));
             }
             rest = queue.slice(1);
           } else {
-            console.error("Sync paused, will retry:", e);
+            setSyncFailed(true);
+            const delay = Math.min(
+              RETRY_BASE_MS * 2 ** retryAttemptRef.current,
+              RETRY_MAX_MS
+            );
+            retryAttemptRef.current += 1;
+            retryTimerRef.current = setTimeout(() => {
+              retryTimerRef.current = null;
+              setRetryTick((t) => t + 1);
+            }, delay);
             return;
           }
         }
         queue = rest;
         persistQueue(queue);
       }
-    } finally {
-      syncingRef.current = false;
-    }
-  };
-
-  // 401 -> login + transient throw; 4xx -> permanent (drop op); 5xx -> transient (retry).
-  const failFor = async (res: Response, fallback: string): Promise<never> => {
-    if (res.status === 401) {
-      router.push("/login");
-      throw new Error("Not authenticated");
-    }
-    const msg = await res
-      .json()
-      .then((b) => b?.error || fallback)
-      .catch(() => fallback);
-    if (res.status >= 400 && res.status < 500) {
-      throw new PermanentSyncError(`${res.status}: ${msg}`);
-    }
-    throw new Error(`${res.status}: ${msg}`);
-  };
-
-  const processOp = async (op: SyncOp, queue: SyncOp[]): Promise<SyncOp[]> => {
-    if (op.type === "add") {
-      const res = await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(op.payload),
-      });
-      if (!res.ok) await failFor(res, "Add failed");
-      const real: ITask = await res.json();
-      persistTasks((prev) =>
-        sortTasks(prev.map((t) => (t._id === op.tempId ? real : t)))
-      );
-      // Rewrite the rest of the queue: anything still pointing at the temp ID
-      // now needs to address the real ID.
-      return queue.slice(1).map((q) =>
-        "taskId" in q && q.taskId === op.tempId
-          ? { ...q, taskId: real._id as string }
-          : q
-      );
-    }
-    // update / toggle: a temp id means the preceding "add" was dropped as
-    // permanent — this op is now orphaned. Drop it too instead of POSTing a
-    // guaranteed-CastError request.
-    if (isTempId(op.taskId)) {
-      throw new PermanentSyncError(`Orphaned op for unresolved temp id ${op.taskId}`);
-    }
-    if (op.type === "update") {
-      const res = await fetch(`/api/tasks/${op.taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(op.payload),
-      });
-      if (!res.ok) await failFor(res, "Update failed");
-      const data: ITask = await res.json();
-      persistTasks((prev) =>
-        sortTasks(prev.map((t) => (t._id === data._id ? data : t)))
-      );
-      return queue.slice(1);
-    }
-    // toggle
-    const res = await fetch(`/api/tasks/${op.taskId}`, { method: "PATCH" });
-    if (!res.ok) await failFor(res, "Toggle failed");
-    const data: ITask = await res.json();
-    persistTasks((prev) => prev.map((t) => (t._id === data._id ? data : t)));
-    return queue.slice(1);
-  };
-
-  // Server tasks → local state, preserving any locally-pending ops. Server is
-  // authoritative for shared IDs; tasks missing from the response have been
-  // removed server-side (e.g. JourFix cleanup) unless we still have a pending
-  // op for them.
-  const applyServerTasks = (data: ITask[], uid: string) => {
-    const pendingIds = new Set<string>();
-    for (const op of loadQueue(uid)) {
-      pendingIds.add(op.type === "add" ? op.tempId : op.taskId);
-    }
-    persistTasks((prev) => {
-      const serverIds = new Set(data.map((t) => t._id));
-      const local = prev.filter(
-        (t) =>
-          t._id && !serverIds.has(t._id) && pendingIds.has(t._id as string)
-      );
-      return sortTasks([...data, ...local]);
+      setSyncFailed(false);
+    };
+    syncingRef.current = run().finally(() => {
+      syncingRef.current = null;
     });
-  };
+    return syncingRef.current;
+  }, [userId, processOp, persistTasks, persistQueue]);
 
-  // Cache considered "fresh" within this window — skip the redundant
-  // server fetch on mount. Sync queue + cleanup still run regardless.
-  const FRESH_CACHE_MS = 60_000;
+  const applyServerTasks = useCallback(
+    (data: ITask[], uid: string) => {
+      const pendingIds = new Set<string>();
+      for (const op of loadQueue(uid)) {
+        pendingIds.add(op.type === "add" ? op.tempId : op.taskId);
+      }
+      persistTasks((prev) => {
+        const localById = new Map(prev.map((t) => [t._id as string, t]));
+        const serverIds = new Set(data.map((t) => t._id));
+        const merged = data.map((t) =>
+          t._id && pendingIds.has(t._id) ? (localById.get(t._id) ?? t) : t
+        );
+        const localOnly = prev.filter(
+          (t) => t._id && !serverIds.has(t._id) && pendingIds.has(t._id)
+        );
+        return sortTasks([...merged, ...localOnly]);
+      });
+    },
+    [persistTasks]
+  );
 
-  // Mount-only: paint cached tasks for whoever last used this browser before
-  // NextAuth's session round-trip resolves. Removes the 1-2s blank gap when
-  // opening the app in a fresh tab.
-  useEffect(() => {
-    const last = loadLastUserId();
-    if (!last) return;
-    const cached = loadTasksCache(last);
-    if (cached && cached.tasks.length > 0) {
-      setTasks(sortTasks(cached.tasks));
-      setInitialLoading(false);
-    }
-    const queueLen = loadQueue(last).length;
-    if (queueLen > 0) setPendingCount(queueLen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Session-resolved load: sync queue, fire JourFix cleanup off the critical
-  // path, and only fetch the canonical task list if the cache is stale.
   useEffect(() => {
     if (status !== "authenticated" || !userId) return;
 
-    // If mount painted a different user's cache (rare: user switched accounts
-    // in this browser since last visit), swap to the current user's view.
-    const last = loadLastUserId();
-    const cached = loadTasksCache(userId);
-    if (last !== userId) {
-      setTasks(cached ? sortTasks(cached.tasks) : []);
-      setPendingCount(loadQueue(userId).length);
-    }
-    // Cache covers this user → no skeleton needed.
-    if (cached && cached.tasks.length > 0) setInitialLoading(false);
-    const cacheAge = cached ? Date.now() - cached.savedAt : Infinity;
-
+    let cancelled = false;
+    const cachedTasks = tasksCache.load(userId);
     (async () => {
-      await runSync();
-
-      // Daily JourFix cleanup, off the critical path. Server returns the
-      // post-cleanup task list iff it actually changed anything; otherwise
-      // a tiny no-op response.
-      fetch("/api/jourfix/cleanup", { method: "POST" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((result) => {
-          if (result?.changed && Array.isArray(result.tasks)) {
-            applyServerTasks(result.tasks as ITask[], userId);
-          }
-        })
-        .catch(() => {
-          // cleanup failures are non-fatal — they'll re-run on next mount
-        });
-
-      if (cacheAge < FRESH_CACHE_MS) {
-        // Cache was written less than a minute ago — trust it, skip the GET.
-        setInitialLoading(false);
-        return;
+      if (cachedTasks) {
+        setTasks(sortTasks(cachedTasks.items));
+        if (cachedTasks.items.length > 0) setInitialLoading(false);
       }
+      setPendingCount(loadQueue(userId).length);
+
+      await runSync();
+      if (cancelled) return;
 
       try {
-        const res = await fetch("/api/tasks");
+        const res = await fetch("/api/tasks?done=false");
         if (res.status === 401) return router.push("/login");
         if (!res.ok) {
-          throw new Error((await res.json()).error || "Failed to load tasks");
+          throw new Error((await res.json()).error || "Could not load tasks");
         }
         const data: ITask[] = await res.json();
-        applyServerTasks(data, userId);
+        if (!cancelled) applyServerTasks(data, userId);
       } catch (e) {
-        // Suppress if cache already populated the screen, or if it's just
-        // a network hiccup — banner / cached UI already conveys state.
-        if ((!cached || cached.tasks.length === 0) && !isNetworkError(e)) {
-          setError(
-            e instanceof Error ? e.message : "Error connecting to the server"
-          );
+        if (!cancelled && !cachedTasks && !isNetworkError(e)) {
+          setError(e instanceof Error ? e.message : "Could not reach the server");
         }
       } finally {
-        setInitialLoading(false);
+        if (!cancelled) setInitialLoading(false);
       }
     })();
-  }, [status, userId, router]);
 
-  // Retry sync as soon as the browser reports network is back.
+    return () => {
+      cancelled = true;
+    };
+  }, [status, userId, router, runSync, applyServerTasks]);
+
+  useEffect(() => {
+    if (retryTick > 0) runSync();
+  }, [retryTick, runSync]);
+
   useEffect(() => {
     if (!userId) return;
     const onOnline = () => runSync();
     window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, [userId]);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
+  }, [userId, runSync]);
 
-  const taskApi = {
-    addTask: (newTask: { date: string; time: string; text: string }) => {
-      if (!userId) return;
-      const tempId = tempTaskId();
-      const optimistic: ITask = {
-        _id: tempId,
-        date: newTask.date || "",
-        time: newTask.time || "",
-        text: newTask.text || "",
-        isDone: false,
-        userId,
-      };
-      persistTasks((prev) => sortTasks([...prev, optimistic]));
-      enqueue({ type: "add", tempId, payload: newTask });
-      runSync();
-    },
-
-    updateTask: (updated: ITask) => {
-      if (!userId || !updated._id) return;
-      persistTasks((prev) =>
-        sortTasks(prev.map((t) => (t._id === updated._id ? updated : t)))
-      );
-      enqueue({ type: "update", taskId: updated._id, payload: updated });
-      runSync();
-    },
-
-    toggleTaskDone: (taskId: string) => {
-      if (!userId) return;
-      persistTasks((prev) =>
-        prev.map((t) => (t._id === taskId ? { ...t, isDone: !t.isDone } : t))
-      );
-      enqueue({ type: "toggle", taskId });
-      runSync();
-    },
+  const enqueue = (op: SyncOp) => {
+    if (!userId) return;
+    persistQueue([...loadQueue(userId), op]);
+    runSync();
   };
 
-  // Don't render anything until we know whether the user is signed in.
-  // Otherwise a first-time visitor sees the home shell + skeleton flash for
-  // a second before being redirected to /login. The mount-only useEffect
-  // still runs (React mounts even when render returns null), so a cached
-  // returning user's tasks are already in state by the time we render.
+  const addTask = (newTask: TaskFormData) => {
+    if (!userId) return;
+    const tempId = tempTaskId();
+    persistTasks((prev) =>
+      sortTasks([...prev, { _id: tempId, ...newTask, isDone: false, userId }])
+    );
+    enqueue({ type: "add", tempId, payload: newTask });
+  };
+
+  const updateTask = (updated: ITask) => {
+    if (!userId || !updated._id) return;
+    persistTasks((prev) =>
+      sortTasks(prev.map((t) => (t._id === updated._id ? updated : t)))
+    );
+    enqueue({ type: "update", taskId: updated._id, payload: updated });
+  };
+
+  const markDone = (taskId: string) => {
+    if (!userId) return;
+    persistTasks((prev) =>
+      prev.map((t) => (t._id === taskId ? { ...t, isDone: true } : t))
+    );
+    enqueue({ type: "setDone", taskId, isDone: true });
+  };
+
   if (status !== "authenticated") return null;
 
   return (
     <div className="app-container">
       <Header
-        title="Tasks"
         currentPage="home"
         userName={session?.user?.name || ""}
       />
@@ -338,9 +299,12 @@ const Home = () => {
         <div className="pending-banner">
           <p>
             {pendingCount === 1
-              ? "1 Änderung wartet auf Synchronisierung."
-              : `${pendingCount} Änderungen warten auf Synchronisierung.`}
+              ? "1 change waiting to sync."
+              : `${pendingCount} changes waiting to sync.`}
           </p>
+          {syncFailed && (
+            <button onClick={() => runSync()}>Retry now</button>
+          )}
         </div>
       )}
       {error && (
@@ -354,9 +318,9 @@ const Home = () => {
           tasks={tasks}
           mode="main"
           loading={initialLoading}
-          onAddTask={taskApi.addTask}
-          onUpdateTask={taskApi.updateTask}
-          onToggleTaskDone={taskApi.toggleTaskDone}
+          onAddTask={addTask}
+          onUpdateTask={updateTask}
+          onToggleTaskDone={markDone}
         />
       </div>
     </div>

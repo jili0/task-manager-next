@@ -4,8 +4,11 @@ import { Suspense, useRef, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { saveTasksCache } from "@/lib/taskCache";
+import { createCache } from "@/lib/localCache";
+import { rememberLogin } from "@/lib/session";
 import { ITask } from "@/types";
+
+const tasksCache = createCache<ITask>("tasks");
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -13,17 +16,11 @@ const LoginForm = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  // Refs so we can read the actual DOM values at submit time. Browser
-  // password-autofill (especially Brave on mobile) writes to the input's
-  // .value without firing a React-friendly onChange — so the controlled
-  // state stays empty and signIn gets "" / "". Reading from the ref first
-  // catches autofilled values; the state still drives the visible value
-  // for normal typing.
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const successMessage = searchParams.get("success");
+  const registered = searchParams.get("registered") === "1";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,41 +35,31 @@ const LoginForm = () => {
         redirect: false,
         email: emailValue,
         password: passwordValue,
+        remember: rememberMe ? "true" : "false",
       });
 
       if (result?.error) {
         setError(result.error);
-      } else {
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "persistent");
-          sessionStorage.removeItem("sessionActive");
-        } else {
-          sessionStorage.setItem("sessionActive", "1");
-          localStorage.removeItem("rememberMe");
-        }
-
-        // Prefetch tasks so the home page can paint from cache instantly
-        // instead of blocking for ~1s on the first GET /api/tasks.
-        // Failure is non-fatal — home falls back to the normal fetch path.
-        try {
-          const [session, tasksRes] = await Promise.all([
-            getSession(),
-            fetch("/api/tasks"),
-          ]);
-          const userId = (session?.user as { id?: string } | undefined)?.id;
-          if (userId && tasksRes.ok) {
-            const tasks: ITask[] = await tasksRes.json();
-            saveTasksCache(userId, tasks);
-          }
-        } catch {
-          // ignore — home page will fetch as usual
-        }
-
-        router.push("/");
-        router.refresh();
+        return;
       }
-    } catch (err) {
-      setError("An error occurred. Please try again later.");
+
+      rememberLogin(rememberMe);
+
+      try {
+        const [session, tasksRes] = await Promise.all([
+          getSession(),
+          fetch("/api/tasks?done=false"),
+        ]);
+        const userId = session?.user?.id;
+        if (userId && tasksRes.ok) {
+          tasksCache.save(userId, (await tasksRes.json()) as ITask[]);
+        }
+      } catch {}
+
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("Sign in failed. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -82,8 +69,10 @@ const LoginForm = () => {
     <div className="login-container">
       <div className="login-form">
         <h1>Sign In</h1>
-        {successMessage && !error && (
-          <div className="success-message">{successMessage}</div>
+        {registered && !error && (
+          <div className="success-message">
+            Registration successful. Please sign in.
+          </div>
         )}
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
@@ -111,20 +100,14 @@ const LoginForm = () => {
               autoComplete="current-password"
             />
           </div>
-          <div
-            className="form-group"
-            style={{ display: "flex", alignItems: "center", gap: "8px" }}
-          >
+          <div className="form-group form-group-inline">
             <input
               id="remember"
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              style={{ width: "auto" }}
             />
-            <label htmlFor="remember" style={{ marginBottom: 0 }}>
-              Keep me signed in for 30 days
-            </label>
+            <label htmlFor="remember">Keep me signed in for 30 days</label>
           </div>
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? "Signing in..." : "Sign In"}

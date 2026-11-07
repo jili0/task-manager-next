@@ -1,39 +1,58 @@
-// src/components/InputRow.tsx
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { TaskFormData, ITask } from "@/types";
+import React, { useEffect, useRef, useState } from "react";
+import { ITask, SearchState, TaskFormData } from "@/types";
 import {
+  debounce,
   formatDate,
   formatTime,
+  getCurrentDate,
+  getCurrentTime,
   isValidDateString,
   isValidTimeString,
-  debounce,
 } from "@/lib/utils";
+import { CloseIcon, PlusIcon, SaveIcon, SearchIcon } from "./Icons";
 
-interface SearchState {
-  date: string;
-  time: string;
-  text: string;
-}
+type Field = keyof TaskFormData;
 
 interface InputRowProps {
   mode: "add" | "search" | "edit";
-
-  // Add mode props
   onAddTask?: (task: TaskFormData) => void;
-
-  // Search mode props
   searchTerms?: SearchState;
   onSearchChange?: (field: keyof SearchState, value: string) => void;
-
-  // Edit mode props
   editTask?: ITask;
   onSaveEdit?: (task: ITask) => void;
   onCancelEdit?: () => void;
-
-  // Draft mode props
-  draftMode?: "add" | "edit";
-  draftTaskId?: string;
 }
+
+const EMPTY: TaskFormData = { date: "", time: "", text: "" };
+
+const PLACEHOLDERS: Record<InputRowProps["mode"], TaskFormData> = {
+  add: { date: "Date", time: "Time", text: "Write New Task" },
+  edit: { date: "Date", time: "Time", text: "Task" },
+  search: { date: "Date", time: "Time", text: "Search Tasks" },
+};
+
+const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+  textarea.style.height = "auto";
+  textarea.style.height = textarea.scrollHeight + 16 + "px";
+};
+
+const createDraftSaver = () => {
+  let last: Promise<unknown> = Promise.resolve();
+  const save = debounce((body: Record<string, unknown>) => {
+    last = fetch("/api/drafts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => undefined);
+  }, 500);
+  return { save, cancel: save.cancel, settled: () => last };
+};
+
+const draftParams = (mode: "add" | "edit", taskId?: string) => {
+  const params = new URLSearchParams({ mode });
+  if (mode === "edit" && taskId) params.set("taskId", taskId);
+  return params.toString();
+};
 
 const InputRow = ({
   mode,
@@ -43,597 +62,285 @@ const InputRow = ({
   editTask,
   onSaveEdit,
   onCancelEdit,
-  draftMode,
-  draftTaskId,
 }: InputRowProps) => {
-  // Add mode state
-  const [newTask, setNewTask] = useState<TaskFormData>({
-    date: "",
-    time: "",
-    text: "",
-  });
+  const isForm = mode === "add" || mode === "edit";
+  const draftTaskId = editTask?._id;
 
-  // Edit mode state
-  const [editedTask, setEditedTask] = useState<ITask>({
-    _id: "",
-    date: "",
-    time: "",
-    text: "",
-    isDone: false,
-  });
-
-  const [isDraftLoaded, setIsDraftLoaded] = useState<boolean>(false);
-  const [userTouched, setUserTouched] = useState<boolean>(false);
-
-  // Visual feedback when a date/time value cannot be parsed as a real date/time
-  const [dateInvalid, setDateInvalid] = useState<boolean>(false);
-  const [timeInvalid, setTimeInvalid] = useState<boolean>(false);
-
-  const saveDraft = useCallback(async (draftData: any) => {
-    try {
-      await fetch("/api/drafts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draftData),
-      });
-    } catch (error) {
-      console.error("Error saving draft:", error);
-    }
-  }, []);
-
-  // Stable debounced ref — never recreated, so the 500ms timer persists across renders
-  const debouncedSaveDraftRef = useRef(debounce(saveDraft, 500));
-
-  const timeTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Initialize edit mode with task data
-  useEffect(() => {
-    if (mode === "edit" && editTask) {
-      setEditedTask({
-        ...editTask,
-        date: editTask.date || "",
-        time: editTask.time || "",
-        text: editTask.text || "",
-      });
-    }
-  }, [mode, editTask]);
-
-  // Load draft on mount
-  useEffect(() => {
-    if ((mode === "add" || mode === "edit") && !isDraftLoaded) {
-      loadDraft();
-    }
-  }, [mode, draftMode, draftTaskId, isDraftLoaded]);
-
-  const loadDraft = async () => {
-    try {
-      const params = new URLSearchParams();
-      params.set("mode", draftMode || mode);
-      if (draftMode === "edit" && draftTaskId) {
-        params.set("taskId", draftTaskId);
-      }
-
-      const response = await fetch(`/api/drafts?${params}`);
-      if (response.ok) {
-        const draft = await response.json();
-        if (draft) {
-          if (mode === "add") {
-            setNewTask({
-              date: draft.date,
-              time: draft.time,
-              text: draft.text,
-            });
-          } else if (mode === "edit") {
-            setEditedTask((prev) => ({
-              ...prev,
-              date: draft.date,
-              time: draft.time,
-              text: draft.text,
-            }));
-          }
+  const [form, setForm] = useState<TaskFormData>(() =>
+    mode === "edit" && editTask
+      ? {
+          date: editTask.date || "",
+          time: editTask.time || "",
+          text: editTask.text || "",
         }
+      : EMPTY
+  );
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [userTouched, setUserTouched] = useState(false);
+  const [invalid, setInvalid] = useState<{ date: boolean; time: boolean }>({
+    date: false,
+    time: false,
+  });
+
+  const timeRef = useRef<HTMLTextAreaElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const [draftSaver] = useState(createDraftSaver);
+
+  useEffect(() => {
+    if (!isForm || draftLoaded) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/drafts?${draftParams(mode, draftTaskId)}`);
+        if (!res.ok || cancelled) return;
+        const draft = await res.json();
+        if (draft && !cancelled) {
+          setForm({
+            date: draft.date || "",
+            time: draft.time || "",
+            text: draft.text || "",
+          });
+        }
+      } catch {
+      } finally {
+        if (!cancelled) setDraftLoaded(true);
       }
-    } catch (error) {
-      console.error("Error loading draft:", error);
-    } finally {
-      setIsDraftLoaded(true);
-    }
-  };
-
-  // Auto-save draft only after the user has actually typed something
-  useEffect(() => {
-    if (!isDraftLoaded || !userTouched) return;
-
-    if (mode === "add") {
-      const draftData = {
-        mode: "add",
-        date: newTask.date,
-        time: newTask.time,
-        text: newTask.text,
-      };
-      debouncedSaveDraftRef.current(draftData);
-    }
-  }, [newTask, isDraftLoaded, mode, userTouched]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isForm, mode, draftTaskId, draftLoaded]);
 
   useEffect(() => {
-    if (!isDraftLoaded || !userTouched) return;
+    if (!isForm || !draftLoaded || !userTouched) return;
+    draftSaver.save({ mode, taskId: draftTaskId, ...form });
+  }, [form, isForm, draftLoaded, mode, draftTaskId, userTouched, draftSaver]);
 
-    if (mode === "edit" && draftTaskId) {
-      const draftData = {
-        mode: "edit",
-        taskId: draftTaskId,
-        date: editedTask.date,
-        time: editedTask.time,
-        text: editedTask.text,
-      };
-      debouncedSaveDraftRef.current(draftData);
-    }
-  }, [editedTask, isDraftLoaded, mode, draftTaskId, userTouched]);
+  const values: TaskFormData = isForm ? form : (searchTerms ?? EMPTY);
 
-  // Helper functions for add mode
-  const getCurrentDate = (): string => {
-    const today = new Date();
-    const day = today.getDate().toString().padStart(2, "0");
-    const month = (today.getMonth() + 1).toString().padStart(2, "0");
-    const year = today.getFullYear();
-
-    return `${day}.${month}.${year}`;
-  };
-
-  const getCurrentTime = (): string => {
-    const now = new Date();
-    const hours = now.getHours().toString().padStart(2, "0");
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-
-    return `${hours}:${minutes}`;
-  };
-
-  // Auto-resize textarea function - only for text field
-  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + 16 + "px";
-  };
-
-  // Adjust height when text changes - only for text field
   useEffect(() => {
-    if (textAreaRef.current) {
-      adjustTextareaHeight(textAreaRef.current);
-    }
-  }, [
-    mode === "add"
-      ? newTask.text
-      : mode === "edit"
-        ? editedTask.text
-        : searchTerms?.text || "",
-  ]);
+    if (textRef.current) adjustTextareaHeight(textRef.current);
+  }, [values.text]);
+
+  const setField = (field: Field, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  const setInvalidField = (field: "date" | "time", value: boolean) =>
+    setInvalid((prev) => ({ ...prev, [field]: value }));
+
+  const deleteDraft = async () => {
+    const draftMode = mode === "edit" ? "edit" : "add";
+    await draftSaver.settled();
+    try {
+      await fetch(`/api/drafts?${draftParams(draftMode, draftTaskId)}`, {
+        method: "DELETE",
+      });
+    } catch {}
+  };
+
+  const applyFormat = (field: "date" | "time", raw: string): boolean => {
+    const formatted = field === "date" ? formatDate(raw) : formatTime(raw);
+    const valid =
+      field === "date"
+        ? isValidDateString(formatted)
+        : isValidTimeString(formatted);
+    setField(field, formatted);
+    setInvalidField(field, !valid);
+    return valid;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name } = e.target;
+    const name = e.target.name as Field;
     let { value } = e.target;
 
-    // Normalize separators so users can type ":" or "/" or "-" interchangeably
-    if ((mode === "add" || mode === "edit") && name === "date") {
-      value = value.replace(/[:/\-]/g, ".");
-    } else if ((mode === "add" || mode === "edit") && name === "time") {
-      value = value.replace(/[./\-]/g, ":");
-    }
-
-    // Clear invalid state as soon as the user starts editing
-    if (name === "date") setDateInvalid(false);
-    else if (name === "time") setTimeInvalid(false);
-
-    if (mode === "add" || mode === "edit") {
-      setUserTouched(true);
-    }
-
-    if (mode === "add") {
-      // Date — auto-format on 6 raw digits
-      if (name === "date") {
-        if (/^\d{6}$/.test(value)) {
-          const formatted = formatDate(value);
-          setNewTask((prev) => ({ ...prev, date: formatted }));
-          if (isValidDateString(formatted)) {
-            timeTextareaRef.current?.focus();
-          } else {
-            setDateInvalid(true);
-          }
-          return;
-        }
-        setNewTask((prev) => ({ ...prev, date: value }));
-        return;
-      }
-
-      // Time — auto-format on 4 raw digits, then jump to text on success
-      if (name === "time") {
-        if (/^\d{4}$/.test(value)) {
-          const formatted = formatTime(value);
-          setNewTask((prev) => ({ ...prev, time: formatted }));
-          if (isValidTimeString(formatted)) {
-            textAreaRef.current?.focus();
-          } else {
-            setTimeInvalid(true);
-          }
-          return;
-        }
-        setNewTask((prev) => ({ ...prev, time: value }));
-        return;
-      }
-
-      if (name === "text") {
-        adjustTextareaHeight(e.target);
-      }
-
-      setNewTask((prev) => ({ ...prev, [name]: value }));
-    } else if (mode === "edit") {
-      if (name === "date") {
-        if (/^\d{6}$/.test(value)) {
-          const formatted = formatDate(value);
-          setEditedTask((prev) => ({ ...prev, date: formatted }));
-          if (isValidDateString(formatted)) {
-            timeTextareaRef.current?.focus();
-          } else {
-            setDateInvalid(true);
-          }
-          return;
-        }
-        setEditedTask((prev) => ({ ...prev, date: value }));
-        return;
-      }
-
-      if (name === "time") {
-        if (/^\d{4}$/.test(value)) {
-          const formatted = formatTime(value);
-          setEditedTask((prev) => ({ ...prev, time: formatted }));
-          if (isValidTimeString(formatted)) {
-            textAreaRef.current?.focus();
-          } else {
-            setTimeInvalid(true);
-          }
-          return;
-        }
-        setEditedTask((prev) => ({ ...prev, time: value }));
-        return;
-      }
-
-      if (name === "text") {
-        adjustTextareaHeight(e.target);
-      }
-
-      setEditedTask((prev) => ({ ...prev, [name]: value }));
-    } else if (mode === "search") {
-      if (name === "text") {
-        adjustTextareaHeight(e.target);
-      }
-      onSearchChange?.(name as keyof SearchState, value);
-    }
-  };
-
-  const updateDateFormat = () => {
-    if (mode === "add") {
-      if (!newTask.date) {
-        setDateInvalid(false);
-        return;
-      }
-      const formatted = formatDate(newTask.date);
-      setNewTask((prev) => ({ ...prev, date: formatted }));
-      setDateInvalid(!isValidDateString(formatted));
-    } else if (mode === "edit") {
-      if (!editedTask.date) {
-        setDateInvalid(false);
-        return;
-      }
-      const formatted = formatDate(editedTask.date);
-      setEditedTask((prev) => ({ ...prev, date: formatted }));
-      setDateInvalid(!isValidDateString(formatted));
-    }
-  };
-
-  const updateTimeFormat = () => {
-    if (mode === "add") {
-      if (!newTask.time) {
-        setTimeInvalid(false);
-        return;
-      }
-      const formatted = formatTime(newTask.time);
-      setNewTask((prev) => ({ ...prev, time: formatted }));
-      setTimeInvalid(!isValidTimeString(formatted));
-    } else if (mode === "edit") {
-      if (!editedTask.time) {
-        setTimeInvalid(false);
-        return;
-      }
-      const formatted = formatTime(editedTask.time);
-      setEditedTask((prev) => ({ ...prev, time: formatted }));
-      setTimeInvalid(!isValidTimeString(formatted));
-    }
-  };
-
-  // Read the DOM value directly instead of going through state. When the
-  // 6-digit auto-format in handleChange focuses the time field, blur fires
-  // synchronously before React commits — so the closure's newTask.date is
-  // still the pre-keystroke value and would re-format into garbage.
-  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-    if (mode !== "add" && mode !== "edit") return;
-    const { name, value } = e.target;
-    if (name !== "date" && name !== "time") return;
-
-    if (!value) {
-      if (name === "date") setDateInvalid(false);
-      else setTimeInvalid(false);
+    if (!isForm) {
+      if (name === "text") adjustTextareaHeight(e.target);
+      onSearchChange?.(name, value);
       return;
     }
 
-    const formatted =
-      name === "date" ? formatDate(value) : formatTime(value);
-    const valid =
-      name === "date"
-        ? isValidDateString(formatted)
-        : isValidTimeString(formatted);
+    setUserTouched(true);
 
-    if (mode === "add") {
-      setNewTask((prev) => ({ ...prev, [name]: formatted }));
+    if (name === "date") {
+      value = value.replace(/[:/\-]/g, ".");
+      setInvalidField("date", false);
+      if (/^\d{6}$/.test(value)) {
+        if (applyFormat("date", value)) timeRef.current?.focus();
+        return;
+      }
+    } else if (name === "time") {
+      value = value.replace(/[./\-]/g, ":");
+      setInvalidField("time", false);
+      if (/^\d{4}$/.test(value)) {
+        if (applyFormat("time", value)) textRef.current?.focus();
+        return;
+      }
     } else {
-      setEditedTask((prev) => ({ ...prev, [name]: formatted }));
+      adjustTextareaHeight(e.target);
     }
-    if (name === "date") setDateInvalid(!valid);
-    else setTimeInvalid(!valid);
+
+    setField(name, value);
   };
 
-  // When a field is marked invalid, clicking back into it clears the bad value
-  // so the user can re-enter without manually deleting first.
-  const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
-    if (mode !== "add" && mode !== "edit") return;
-    const { name } = e.target;
-    if (name === "date" && dateInvalid) {
-      if (mode === "add") {
-        setNewTask((prev) => ({ ...prev, date: "" }));
-      } else {
-        setEditedTask((prev) => ({ ...prev, date: "" }));
-      }
-      setDateInvalid(false);
-    } else if (name === "time" && timeInvalid) {
-      if (mode === "add") {
-        setNewTask((prev) => ({ ...prev, time: "" }));
-      } else {
-        setEditedTask((prev) => ({ ...prev, time: "" }));
-      }
-      setTimeInvalid(false);
+  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    if (!isForm) return;
+    const name = e.target.name;
+    if (name !== "date" && name !== "time") return;
+    if (!e.target.value) {
+      setInvalidField(name, false);
+      return;
     }
+    applyFormat(name, e.target.value);
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    if (!isForm) return;
+    const name = e.target.name;
+    if ((name === "date" || name === "time") && invalid[name]) {
+      setField(name, "");
+      setInvalidField(name, false);
+    }
+  };
+
+  const insertLineBreak = (textarea: HTMLTextAreaElement) => {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    setField("text", value.substring(0, start) + "\n" + value.substring(end));
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
+    }, 0);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (mode !== "add" && mode !== "edit") return;
-
-    if (e.key === "Enter") {
-      if (e.currentTarget.name === "date") {
-        e.preventDefault();
-        if (mode === "add") {
-          if (!newTask.date.trim()) {
-            setNewTask((prev) => ({ ...prev, date: getCurrentDate() }));
-            setDateInvalid(false);
-          } else {
-            updateDateFormat();
-          }
-        } else if (mode === "edit") {
-          updateDateFormat();
-        }
-        timeTextareaRef.current?.focus();
-        return;
-      }
-
-      if (e.currentTarget.name === "time") {
-        e.preventDefault();
-        if (mode === "add") {
-          if (!newTask.time.trim()) {
-            setNewTask((prev) => ({ ...prev, time: getCurrentTime() }));
-            setTimeInvalid(false);
-          } else {
-            updateTimeFormat();
-          }
-        } else if (mode === "edit") {
-          updateTimeFormat();
-        }
-        textAreaRef.current?.focus();
-        return;
-      }
-
-      if (e.currentTarget.name === "text") {
-        const noMod = !e.shiftKey && !e.metaKey && !e.altKey && !e.ctrlKey;
-        const onlyShift = e.shiftKey && !e.metaKey && !e.altKey && !e.ctrlKey;
-
-        if (onlyShift) {
-          // Shift+Enter → save in both add and edit.
-          e.preventDefault();
-          if (mode === "add") {
-            handleAddTask();
-          } else {
-            handleSaveEdit();
-          }
-        } else if (noMod) {
-          // Bare Enter → linebreak, handled natively by the textarea.
-        } else {
-          // Meta/Alt/Ctrl+Enter → insert linebreak manually, since browsers
-          // ignore modifier+Enter on textareas.
-          e.preventDefault();
-          const textarea = e.currentTarget;
-          const start = textarea.selectionStart;
-          const end = textarea.selectionEnd;
-          const value = textarea.value;
-          const newValue =
-            value.substring(0, start) + "\n" + value.substring(end);
-
-          if (mode === "add") {
-            setNewTask((prev) => ({ ...prev, text: newValue }));
-          } else if (mode === "edit") {
-            setEditedTask((prev) => ({ ...prev, text: newValue }));
-          }
-
-          setTimeout(() => {
-            textarea.selectionStart = textarea.selectionEnd = start + 1;
-          }, 0);
-        }
-      }
-    }
-
     if (e.key === "Escape" && mode === "edit") {
       onCancelEdit?.();
+      return;
     }
-  };
+    if (e.key !== "Enter") return;
 
-  const deleteDraft = async () => {
-    try {
-      const params = new URLSearchParams();
-      params.set("mode", draftMode || mode);
-      if (draftMode === "edit" && draftTaskId) {
-        params.set("taskId", draftTaskId);
+    if (!isForm) {
+      e.preventDefault();
+      return;
+    }
+
+    const name = e.currentTarget.name as Field;
+
+    if (name === "date") {
+      e.preventDefault();
+      if (!form.date.trim()) {
+        setField("date", mode === "add" ? getCurrentDate() : "");
+        setInvalidField("date", false);
+      } else {
+        applyFormat("date", form.date);
       }
+      timeRef.current?.focus();
+      return;
+    }
 
-      await fetch(`/api/drafts?${params}`, {
-        method: "DELETE",
+    if (name === "time") {
+      e.preventDefault();
+      if (!form.time.trim()) {
+        setField("time", mode === "add" ? getCurrentTime() : "");
+        setInvalidField("time", false);
+      } else {
+        applyFormat("time", form.time);
+      }
+      textRef.current?.focus();
+      return;
+    }
+
+    const hasModifier = e.metaKey || e.altKey || e.ctrlKey;
+    if (e.shiftKey && !hasModifier) {
+      e.preventDefault();
+      submit();
+    } else if (hasModifier) {
+      e.preventDefault();
+      insertLineBreak(e.currentTarget);
+    }
+  };
+
+  const submit = () => {
+    if (!isForm) return;
+    if (!(form.date || form.time || form.text)) return;
+
+    const formattedDate = form.date.trim() ? formatDate(form.date) : "";
+    const formattedTime = form.time.trim() ? formatTime(form.time) : "";
+
+    if (formattedDate && !isValidDateString(formattedDate)) {
+      setField("date", formattedDate);
+      setInvalidField("date", true);
+      return;
+    }
+    if (formattedTime && !isValidTimeString(formattedTime)) {
+      setField("time", formattedTime);
+      setInvalidField("time", true);
+      return;
+    }
+
+    if (mode === "add") {
+      onAddTask?.({
+        date: formattedDate || getCurrentDate(),
+        time: formattedTime || getCurrentTime(),
+        text: form.text,
       });
-    } catch (error) {
-      console.error("Error deleting draft:", error);
+      setForm(EMPTY);
+    } else if (editTask) {
+      onSaveEdit?.({
+        ...editTask,
+        date: formattedDate,
+        time: formattedTime,
+        text: form.text,
+      });
     }
+
+    setInvalid({ date: false, time: false });
+    setUserTouched(false);
+    draftSaver.cancel();
+    deleteDraft();
   };
 
-  const handleAddTask = () => {
-    if (mode !== "add") return;
-    if (!(newTask.date || newTask.time || newTask.text)) return;
+  const placeholders = PLACEHOLDERS[mode];
 
-    const formattedDate = newTask.date.trim() ? formatDate(newTask.date) : "";
-    const formattedTime = newTask.time.trim() ? formatTime(newTask.time) : "";
-
-    if (formattedDate && !isValidDateString(formattedDate)) {
-      setNewTask((prev) => ({ ...prev, date: formattedDate }));
-      setDateInvalid(true);
-      return;
-    }
-    if (formattedTime && !isValidTimeString(formattedTime)) {
-      setNewTask((prev) => ({ ...prev, time: formattedTime }));
-      setTimeInvalid(true);
-      return;
-    }
-
-    const taskToAdd = {
-      date: formattedDate || getCurrentDate(),
-      time: formattedTime || getCurrentTime(),
-      text: newTask.text,
+  const fieldProps = (field: "date" | "time") => {
+    const isInvalid = isForm && invalid[field];
+    return {
+      name: field,
+      value: values[field],
+      placeholder: placeholders[field],
+      rows: 1,
+      maxLength: field === "date" ? 10 : 5,
+      className: isInvalid ? "invalid" : undefined,
+      "aria-invalid": isInvalid ? true : undefined,
+      title: isInvalid
+        ? field === "date"
+          ? "Please enter a valid date (DD.MM.YYYY)"
+          : "Please enter a valid time (HH:MM)"
+        : undefined,
     };
-
-    onAddTask?.(taskToAdd);
-    setNewTask({ date: "", time: "", text: "" });
-    setDateInvalid(false);
-    setTimeInvalid(false);
-    setUserTouched(false);
-    debouncedSaveDraftRef.current.cancel();
-    deleteDraft();
   };
-
-  const handleSaveEdit = () => {
-    if (mode !== "edit") return;
-    if (!(editedTask.date || editedTask.time || editedTask.text)) return;
-
-    const formattedDate = editedTask.date.trim()
-      ? formatDate(editedTask.date)
-      : "";
-    const formattedTime = editedTask.time.trim()
-      ? formatTime(editedTask.time)
-      : "";
-
-    if (formattedDate && !isValidDateString(formattedDate)) {
-      setEditedTask((prev) => ({ ...prev, date: formattedDate }));
-      setDateInvalid(true);
-      return;
-    }
-    if (formattedTime && !isValidTimeString(formattedTime)) {
-      setEditedTask((prev) => ({ ...prev, time: formattedTime }));
-      setTimeInvalid(true);
-      return;
-    }
-
-    onSaveEdit?.({
-      ...editedTask,
-      date: formattedDate,
-      time: formattedTime,
-    });
-    setUserTouched(false);
-    debouncedSaveDraftRef.current.cancel();
-    deleteDraft();
-  };
-
-  const handleCancelEdit = () => {
-    if (mode !== "edit") return;
-    onCancelEdit?.();
-  };
-
-  // Get values based on mode
-  const getValues = () => {
-    if (mode === "add") {
-      return newTask;
-    } else if (mode === "edit") {
-      return editedTask;
-    } else {
-      return searchTerms || { date: "", time: "", text: "" };
-    }
-  };
-
-  // Get placeholders based on mode
-  const getPlaceholders = () => {
-    if (mode === "add") {
-      return { date: "Date", time: "Time", text: "Write New Task" };
-    } else if (mode === "edit") {
-      return { date: "Date", time: "Time", text: "Task" };
-    } else {
-      return { date: "Date", time: "Time", text: "Search Tasks" };
-    }
-  };
-
-  const values = getValues();
-  const placeholders = getPlaceholders();
-  const showInvalid = mode === "add" || mode === "edit";
 
   return (
     <div className="task-item task-item-input">
       <div className="task-datetime-container">
         <div className="task-item-date">
           <textarea
-            name="date"
-            value={values.date}
+            {...fieldProps("date")}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             onFocus={handleFocus}
-            placeholder={placeholders.date}
             autoFocus={mode === "edit"}
-            className={showInvalid && dateInvalid ? "invalid" : undefined}
-            aria-invalid={showInvalid && dateInvalid ? true : undefined}
-            title={
-              showInvalid && dateInvalid
-                ? "Please enter a valid date (DD.MM.YYYY)"
-                : undefined
-            }
-            rows={1}
           />
         </div>
         <div className="task-item-time">
           <textarea
-            name="time"
-            value={values.time}
+            {...fieldProps("time")}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
             onFocus={handleFocus}
-            placeholder={placeholders.time}
-            ref={timeTextareaRef}
-            className={showInvalid && timeInvalid ? "invalid" : undefined}
-            aria-invalid={showInvalid && timeInvalid ? true : undefined}
-            title={
-              showInvalid && timeInvalid
-                ? "Please enter a valid time (HH:MM)"
-                : undefined
-            }
-            rows={1}
+            ref={timeRef}
           />
         </div>
       </div>
@@ -645,92 +352,47 @@ const InputRow = ({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholders.text}
-          ref={textAreaRef}
+          ref={textRef}
           rows={2}
+          maxLength={5000}
         />
       </div>
 
       <div className="task-item-actions">
         {mode === "add" && (
           <button
-            onClick={handleAddTask}
+            onClick={submit}
             className="btn btn-primary"
-            title="Add Task"
+            title="Add task"
+            aria-label="Add task"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
+            <PlusIcon />
           </button>
         )}
 
         {mode === "search" && (
-          <button className="btn btn-primary" title="Search">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-          </button>
+          <span className="btn btn-primary btn-static" title="Search">
+            <SearchIcon />
+          </span>
         )}
 
         {mode === "edit" && (
           <>
             <button
-              onClick={handleCancelEdit}
-              className="btn btn-primary"
+              onClick={() => onCancelEdit?.()}
+              className="btn btn-secondary"
               title="Cancel"
+              aria-label="Cancel"
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M1 4v6h6"></path>
-                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-              </svg>
+              <CloseIcon />
             </button>
             <button
-              onClick={handleSaveEdit}
+              onClick={submit}
               className="btn btn-success"
               title="Save"
+              aria-label="Save"
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
-                <polyline points="17,21 17,13 7,13 7,21"></polyline>
-                <polyline points="7,3 7,8 15,8"></polyline>
-              </svg>
+              <SaveIcon />
             </button>
           </>
         )}

@@ -2,27 +2,15 @@ import mongoose, { Schema } from "mongoose";
 
 const UserSchema = new Schema(
   {
-    name: {
-      type: String,
-      required: true
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true
-    },
-    password: {
-      type: String,
-      required: true
-    },
-    lastJourFixCleanup: {
-      type: Date,
-      required: false
-    }
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    sessionVersion: { type: Number, default: 0 },
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
-export default mongoose.models.User || mongoose.model("User", UserSchema);
+if (mongoose.models.User) mongoose.deleteModel("User");
+const User = mongoose.model("User", UserSchema);
+
+export default User;

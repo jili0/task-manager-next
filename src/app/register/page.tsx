@@ -1,40 +1,44 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+const MIN_PASSWORD_LENGTH = 5;
+const MAX_PASSWORD_LENGTH = 30;
 
 const Register = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
-
-      const data = await response.json();
-
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || "Registration failed");
       }
-
-      router.push('/login?success=Registration successful! Please sign in.');
-    } catch (err: any) {
-      setError(err.message);
+      router.push("/login?registered=1");
+    } catch (err) {
+      setError(
+        err instanceof TypeError
+          ? "Could not reach the server."
+          : err instanceof Error
+            ? err.message
+            : "Registration failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -54,6 +58,8 @@ const Register = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              autoComplete="name"
+              maxLength={100}
             />
           </div>
           <div className="form-group">
@@ -64,6 +70,8 @@ const Register = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
+              maxLength={254}
             />
           </div>
           <div className="form-group">
@@ -74,14 +82,13 @@ const Register = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={MIN_PASSWORD_LENGTH}
+              maxLength={MAX_PASSWORD_LENGTH}
+              autoComplete="new-password"
             />
           </div>
-          <button 
-            type="submit" 
-            className="login-button" 
-            disabled={loading}
-          >
-            {loading ? 'Registering...' : 'Register'}
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
         <p className="signup-link">

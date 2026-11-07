@@ -1,17 +1,24 @@
-// src/lib/syncQueue.ts
-import { ITask } from "@/types";
+import { ITask, TaskFormData } from "@/types";
 
 export type SyncOp =
-  | {
-      type: "add";
-      tempId: string;
-      payload: { date: string; time: string; text: string };
-    }
+  | { type: "add"; tempId: string; payload: TaskFormData }
   | { type: "update"; taskId: string; payload: ITask }
-  | { type: "toggle"; taskId: string };
+  | { type: "setDone"; taskId: string; isDone: boolean };
 
 const KEY_PREFIX = "task-sync-queue:";
 const keyFor = (userId: string) => `${KEY_PREFIX}${userId}`;
+
+const migrate = (op: unknown): SyncOp | null => {
+  if (!op || typeof op !== "object") return null;
+  const o = op as Record<string, unknown>;
+  if (o.type === "toggle" && typeof o.taskId === "string") {
+    return { type: "setDone", taskId: o.taskId, isDone: true };
+  }
+  if (o.type === "add" || o.type === "update" || o.type === "setDone") {
+    return op as SyncOp;
+  }
+  return null;
+};
 
 export const loadQueue = (userId: string): SyncOp[] => {
   try {
@@ -19,7 +26,8 @@ export const loadQueue = (userId: string): SyncOp[] => {
     const raw = localStorage.getItem(keyFor(userId));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as SyncOp[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(migrate).filter((op): op is SyncOp => op !== null);
   } catch {
     return [];
   }
@@ -30,9 +38,7 @@ export const saveQueue = (userId: string, ops: SyncOp[]): void => {
     if (typeof window === "undefined") return;
     if (ops.length === 0) localStorage.removeItem(keyFor(userId));
     else localStorage.setItem(keyFor(userId), JSON.stringify(ops));
-  } catch {
-    // quota / unavailable — swallow
-  }
+  } catch {}
 };
 
 export const clearAllQueues = (): void => {
@@ -41,19 +47,11 @@ export const clearAllQueues = (): void => {
     Object.keys(localStorage)
       .filter((k) => k.startsWith(KEY_PREFIX))
       .forEach((k) => localStorage.removeItem(k));
-  } catch {
-    // ignore
-  }
+  } catch {}
 };
 
-// fetch() throws TypeError on network failure (offline, DNS error, CORS).
-// Anything else (HTTP 4xx/5xx) returns a Response — that's a real error
-// the user needs to see, not something to retry silently.
 export const isNetworkError = (e: unknown): boolean => e instanceof TypeError;
 
-// Thrown by processOp for HTTP failures that won't succeed on retry
-// (4xx — task was deleted, invalid id, validation error). Dropping these
-// from the queue prevents one bad op from blocking all later ones forever.
 export class PermanentSyncError extends Error {
   readonly permanent = true;
   constructor(message: string) {

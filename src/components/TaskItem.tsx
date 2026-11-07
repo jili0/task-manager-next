@@ -1,39 +1,68 @@
-// src/components/TaskItem.tsx
 import React, { useState } from "react";
-import { ITask } from "@/types";
-import { formatTimeDisplay, isValidDateString } from "@/lib/utils";
+import { ITask, SearchState } from "@/types";
+import {
+  escapeRegExp,
+  formatTimeDisplay,
+  isValidDateString,
+} from "@/lib/utils";
 import InputRow from "./InputRow";
-
-interface SearchState {
-  date: string;
-  time: string;
-  text: string;
-}
+import { EditIcon, TrashIcon, UndoIcon } from "./Icons";
 
 interface TaskItemProps {
   task: ITask;
   index: number;
   mode: "main" | "history";
-  dividerType?: string | null;
-
-  // Edit functionality (for both modes)
+  dividerType?: "month" | "year" | null;
   isEditing?: boolean;
   onEdit?: () => void;
   onSave?: (task: ITask) => void;
   onCancelEdit?: () => void;
-
-  // Search highlighting (history mode only)
   searchTerms?: SearchState;
-
-  // Action buttons (mode-specific)
-  onToggleDone?: () => void; // main mode
-  onUndo?: () => void; // history mode
-  onDelete?: () => void; // history mode
-
-  // Draft mode props
-  draftMode?: "add" | "edit";
-  draftTaskId?: string;
+  onToggleDone?: () => void;
+  onUndo?: () => void;
+  onDelete?: () => void;
 }
+
+const highlight = (text: string, term: string): React.ReactNode => {
+  if (!term || !text) return text;
+  const parts = text.split(new RegExp(`(${escapeRegExp(term)})`, "gi"));
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <mark key={i}>{part}</mark> : part
+  );
+};
+
+const trimBlankLines = (text: string): string[] => {
+  const lines = text.split("\n");
+  let from = 0;
+  let to = lines.length;
+  while (from < to && lines[from] === "") from++;
+  while (to > from && lines[to - 1] === "") to--;
+  return lines.slice(from, to);
+};
+
+const ActionButton = ({
+  onClick,
+  className,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  className: string;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      onClick();
+    }}
+    className={`btn ${className}`}
+    title={title}
+    aria-label={title}
+  >
+    {children}
+  </button>
+);
 
 const TaskItem = ({
   task,
@@ -45,29 +74,13 @@ const TaskItem = ({
   onSave,
   onCancelEdit,
   searchTerms,
-  draftMode,
-  draftTaskId,
   onToggleDone,
   onUndo,
   onDelete,
 }: TaskItemProps) => {
-  // Function to highlight search terms (history mode)
-  const highlightText = (text: string, searchTerm: string) => {
-    if (!searchTerm || !text || mode !== "history") return text;
-
-    const regex = new RegExp(`(${searchTerm})`, "gi");
-    const parts = text.split(regex);
-
-    return parts.map((part, i) =>
-      regex.test(part) ? <mark key={i}>{part}</mark> : part
-    );
-  };
-
-  // Track which line was just copied so we can flash the background
   const [copiedLineIndex, setCopiedLineIndex] = useState<number | null>(null);
 
-  // Double-click a line to copy its text. The flash class is removed after 300ms.
-  const handleLineDoubleClick = async (lineText: string, lineIndex: number) => {
+  const copyLine = async (lineText: string, lineIndex: number) => {
     try {
       await navigator.clipboard.writeText(lineText);
       setCopiedLineIndex(lineIndex);
@@ -76,12 +89,9 @@ const TaskItem = ({
           current === lineIndex ? null : current
         );
       }, 300);
-    } catch (error) {
-      console.error("Failed to copy text:", error);
-    }
+    } catch {}
   };
 
-  // Render edit mode using InputRow
   if (isEditing) {
     return (
       <InputRow
@@ -89,174 +99,89 @@ const TaskItem = ({
         editTask={task}
         onSaveEdit={onSave}
         onCancelEdit={onCancelEdit}
-        draftMode={draftMode}
-        draftTaskId={draftTaskId}
       />
     );
   }
 
-  // Render display mode
+  const terms = mode === "history" ? searchTerms : undefined;
   const dateInvalid = !!task.date && !isValidDateString(task.date);
+  const timeDisplay = formatTimeDisplay(task.time, task.date);
+  const classes = [
+    "task-item",
+    index % 2 === 1 ? "even" : "",
+    dividerType === "month" ? "last-of-month" : "",
+    dividerType === "year" ? "last-of-year" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div
-      className={`task-item ${index % 2 === 0 ? "" : "even"} ${
-        dividerType === "month" ? "last-of-month" : ""
-      } ${dividerType === "year" ? "last-of-year" : ""}`}
-    >
+    <div className={classes}>
       <div className="task-datetime-container">
         <div
           className={
             "task-item-date" + (dateInvalid ? " task-item-date-invalid" : "")
           }
-          title={dateInvalid ? "Ungültiges Datum — bitte bearbeiten" : undefined}
+          title={dateInvalid ? "Invalid date, please edit" : undefined}
         >
-          {task.isRecurring && (
-            <span className="recurring-marker" title="JourFix series">♺</span>
+          {task.birthdayId && (
+            <span className="recurring-marker" title="Birthday">
+              🎂
+            </span>
           )}
-          {mode === "history" && searchTerms
-            ? highlightText(task.date || "", searchTerms.date)
-            : task.date || " "}
+          {terms ? highlight(task.date, terms.date) : task.date || " "}
         </div>
         <div className="task-item-time">
-          {mode === "history" && searchTerms
-            ? highlightText(
-                formatTimeDisplay(task.time || "", task.date),
-                searchTerms.time
-              )
-            : formatTimeDisplay(task.time || "", task.date) || " "}
+          {terms ? highlight(timeDisplay, terms.time) : timeDisplay || " "}
         </div>
       </div>
       <div className="task-item-text">
         {task.text
-          ? (() => {
-              // Preserve empty lines between content but trim leading/trailing
-              // blank lines — those are usually accidental and produce ugly
-              // top/bottom padding in the row.
-              const lines = task.text.split("\n");
-              let from = 0;
-              let to = lines.length;
-              while (from < to && lines[from] === "") from++;
-              while (to > from && lines[to - 1] === "") to--;
-              return lines.slice(from, to).map((line, i) => (
-                <React.Fragment key={i}>
-                  <span
-                    onDoubleClick={() => handleLineDoubleClick(line, i)}
-                    className={copiedLineIndex === i ? "copied" : undefined}
-                    style={{ cursor: "pointer" }}
-                    title="Double click to copy this line"
-                  >
-                    {mode === "history" && searchTerms
-                      ? highlightText(line, searchTerms.text)
-                      : line}
-                  </span>
-                </React.Fragment>
-              ));
-            })()
+          ? trimBlankLines(task.text).map((line, i) => (
+              <span
+                key={i}
+                onDoubleClick={() => copyLine(line, i)}
+                className={copiedLineIndex === i ? "copied" : undefined}
+                style={{ cursor: "pointer" }}
+                title="Double click to copy this line"
+              >
+                {terms ? highlight(line, terms.text) : line}
+              </span>
+            ))
           : " "}
       </div>
       <div className="task-item-actions">
         {mode === "main" && onEdit && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="btn btn-primary"
-            title="Edit task"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-          </button>
+          <ActionButton onClick={onEdit} className="btn-primary" title="Edit">
+            <EditIcon />
+          </ActionButton>
         )}
-
         {mode === "main" && onToggleDone && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleDone();
-            }}
-            className="btn btn-danger"
+          <ActionButton
+            onClick={onToggleDone}
+            className="btn-danger"
             title="Mark as done"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="3,6 5,6 21,6"></polyline>
-              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-          </button>
+            <TrashIcon />
+          </ActionButton>
         )}
-
         {mode === "history" && onUndo && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onUndo();
-            }}
-            className="btn btn-secondary"
-            title="Restore task"
+          <ActionButton
+            onClick={onUndo}
+            className="btn-secondary"
+            title="Restore"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M1 4v6h6"></path>
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-            </svg>
-          </button>
+            <UndoIcon />
+          </ActionButton>
         )}
-
         {mode === "history" && onDelete && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="btn btn-danger"
+          <ActionButton
+            onClick={onDelete}
+            className="btn-danger"
             title="Delete permanently"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="3,6 5,6 21,6"></polyline>
-              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
-              <line x1="10" y1="11" x2="10" y2="17"></line>
-              <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-          </button>
+            <TrashIcon />
+          </ActionButton>
         )}
       </div>
     </div>
